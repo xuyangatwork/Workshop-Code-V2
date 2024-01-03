@@ -307,9 +307,6 @@ def api_call_exercise():
 		st.write(f"Completion Tokens: {completion_tokens}")
 		st.write(f"Prompt Tokens: {prompt_tokens}")
 		st.write(f"Total Tokens: {total_tokens}")
-		#s = str(response["usage"]["total_tokens"])
-		#st.markdown("**Total tokens used:**")
-		#st.write(s)
 
 
 

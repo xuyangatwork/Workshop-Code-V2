@@ -572,6 +572,7 @@ def main():
 			elif options == 'Template 1 - Form':
 				tpl.template1_form_with_genai_call()
 			elif options == 'Template 2 - Chatbot':
+				tpl.chatbot_settings()
 				tpl.template2_ragbot()
 			elif options == 'Template 3 - Assistant':
 				if "OPENAI_ASSISTANT" in st.secrets:

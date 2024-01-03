@@ -12,34 +12,35 @@ from datetime import datetime
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chat_models import ChatOpenAI
+import configparser
+import ast
+
 client = OpenAI(
     # defaults to os.environ.get("OPENAI_API_KEY")
     api_key=return_api_key(),
 )
-# if "form_title" not in st.session_state:
-# 	st.session_state.form_title = "Message Generator"
-# if "question_1" not in st.session_state:
-# 	st.session_state.question_1 = "Name"
-# if "question_2" not in st.session_state:
-# 	st.session_state.question_2 = "Occupation"
-# if "question_3" not in st.session_state:
-# 	st.session_state.question_3 = "Subject"
-# if "question_4" not in st.session_state:
-# 	st.session_state.question_4 = "Message"
-# if "question_5" not in st.session_state:
-# 	st.session_state.question_5 = "Number of words"
-# if "my_form_template" not in st.session_state:
-# 	st.session_state.my_form_template = "To help you write your email, You may refer to this resources to answer your query,{resource},{source}"
-# if "my_app_template" not in st.session_state:
-# 	st.session_state.my_app_template = "Pretend you are a {q2}, your name is {q1}, I want you to write an email on {q4} on the subject {q3} , the number of words is {q5}"
-# if "my_app_template_advance" not in st.session_state:
-# 	st.session_state.my_app_template_advance = """Pretend you are a helpful assistant, Use the following pieces of context to answer the question at the end. 
-# 	If you don't know the answer, just say that you don't know, don't try to make up an answer. Search Result: {resource},  {source}. 
-# 	History of conversation: {mem}.You must quote the source of the Search Result if you are using the search result as part of the answer"""
 
-def form_input():
+class ConfigHandler:
+	def __init__(self):
+		self.config = configparser.ConfigParser()
+		self.config.read('config.ini')
+
+	def get_config_values(self, section, key):
+		value = self.config.get(section, key)
+		try:
+			# Try converting the string value to a Python data structure
+			return ast.literal_eval(value)
+		except (SyntaxError, ValueError):
+			# If not a data structure, return the plain string
+			return value
+
+config_handler = ConfigHandler()
+MY_APP = config_handler.get_config_values('Prompt_Design_Templates', 'MY_APP')
+MY_FORM = config_handler.get_config_values('Prompt_Design_Templates', 'MY_FORM')
+
+def init_settings():
 	if "form_title" not in st.session_state:
-			st.session_state.form_title = "Message Generator"
+		st.session_state.form_title = "Message Generator"
 	if "question_1" not in st.session_state:
 		st.session_state.question_1 = "Name"
 	if "question_2" not in st.session_state:
@@ -50,6 +51,9 @@ def form_input():
 		st.session_state.question_4 = "Message"
 	if "question_5" not in st.session_state:
 		st.session_state.question_5 = "Number of words"
+
+
+def form_input():
 		
 	with st.form("my_form"):
 		st.subheader(st.session_state.form_title)
@@ -67,6 +71,7 @@ def form_input():
 	return False
 
 def form_settings():
+
 	title = st.text_input("Form Title", value=st.session_state.form_title)
 	question_1 = st.text_input("Question 1:", value=st.session_state.question_1, key="question_1")
 	question_2 = st.text_input("Question 2:", value=st.session_state.question_2, key="question_2")
@@ -95,7 +100,11 @@ def chatbot_settings():
 
 def prompt_template_settings():
 	st.info("You can use the following variables which is link to your first 5 questions in your form prompt inputs: {q1}, {q2}, {q3}, {q4}, {q5}")
+	if st.checkbox("Use form design default template"):
+		st.session_state.my_app_template = MY_APP
 	form_input = st.text_area("Enter your form prompt:", value = st.session_state.my_app_template, height=300 )
+	if st.checkbox("Use default app template"):
+		st.session_state.my_form_template = MY_FORM
 	st.info("Enter your app prompt template here, you can add the following variables: {source}, {resource} ")
 	prompt_template = st.text_area("Enter your application prompt design", value = st.session_state.my_form_template, height=300)
 	if st.button("Update Prompt Template", key = 2):
@@ -204,7 +213,7 @@ def chat_completion_prototype(prompt):
 
 #integration API call into streamlit chat components with memory and qa
 
-def prototype_advance_bot(bot_name):
+def prototype_advance_bot(bot_name= "Prototype"):
 	
 	greetings_str = f"Hi, I am {bot_name}"
 	help_str = "How can I help you today?"
@@ -267,7 +276,7 @@ def template_prompt(prompt, prompt_template):
 	return response
 
 
-def basic_bot(prompt, bot_name):
+def basic_bot(prompt, bot_name= "Prototype"):
 	try:
 		if prompt:
 			if "memory" not in st.session_state:
