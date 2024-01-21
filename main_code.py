@@ -10,10 +10,7 @@ from basecode.authenticate import login_function,check_password
 from basecode.class_dash import download_data_table_csv
 from nocode_workshop.machine import upload_csv, plot_prices, prepare_data_and_train, plot_predictions, load_teachable_machines
 from nocode_workshop.agent import agent_bot, agent_management, wiki_search, YouTubeSearchTool, DuckDuckGoSearchRun
-from nocode_workshop.rule_base_api_chatbot import call_api, rule_based, group_rule_based, init_training_data
-from nocode_workshop.faq_bot import faq_bot
-from nocode_workshop.discussion_bot import discussion_bot, extract_and_combine_responses
-from nocode_workshop.prompt_designs import prompt_designs_llm
+from nocode_workshop.rule_base_api_chatbot import call_api, api_call, rule_based
 from nocode_workshop.prototype_application import my_first_app, prototype_settings, my_first_app_advance
 from nocode_workshop.analytics_dashboard import pandas_ai
 from nocode_workshop.assistant import assistant_demo, init_session_state
@@ -22,7 +19,6 @@ from nocode_workshop.k_map import map_creation_form
 from basecode.database_schema import create_dbs
 from coding_workshop import exercises as ex
 from coding_workshop import project_templates as tpl
-import pandas as pd
 
 from basecode.database_module import (
 	manage_tables, 
@@ -129,8 +125,6 @@ MINDMAP = config_handler.get_value('constants', 'MINDMAP')
 METACOG = config_handler.get_value('constants', 'METACOG')
 ACK = config_handler.get_value('application_agreement', 'ACK')
 PROTOTYPE = config_handler.get_value('constants', 'PROTOTYPE')
-
-
 
 def is_function_disabled(function_name):
 	#st.write("Function name: ", function_name)
@@ -244,9 +238,6 @@ def main():
 
 		if "chat_response" not in st.session_state:
 			st.session_state.chat_response = ""
-		
-		if "analyse_discussion" not in st.session_state:
-			st.session_state.analyse_discussion = False
 
 		#useful session state variables for testing and debugging
 		#not in use for production
@@ -297,40 +288,37 @@ def main():
 						sac.MenuItem(return_function_name('Image Generator','Image Analyser and Generator'), icon='camera', disabled=is_function_disabled('Image Generator')),
 						sac.MenuItem(return_function_name('Voice','Voice Analyser and Generator'), icon='mic',disabled=is_function_disabled('Voice')),
 					]),	
-					#=================remove for coding exercises=================#
-					# sac.MenuItem('Coding Exercises', icon='person-fill-gear', children=[
-					# 	sac.MenuItem(return_function_name('Streamlit App Ex','Streamlit App (Exercise)'), icon='filetype-py', disabled=is_function_disabled('Streamlit App Ex'), children=[
-					# 		sac.MenuItem("Python (Ex 0-9 & Ch 1-3)", icon='filetype-py'),
-					# 		sac.MenuItem("First Streamlit App", icon='filetype-py'),]),
-					# 	sac.MenuItem(return_function_name('Rule Based Chatbot Ex','Rule Based Chatbot (Ex & Ch 1)'), icon='filetype-py', disabled=is_function_disabled('Rule Based Chatbot Ex')),
-					# 	sac.MenuItem(return_function_name('Open AI API Call Ex','Open AI API Call (Ex & Ch 2)'), icon='filetype-py', disabled=is_function_disabled('Open AI API Call Ex')),
-					# 	sac.MenuItem(return_function_name('AI Chatbot Ex','AI Chatbot(Exercise)'), icon='filetype-py', disabled=is_function_disabled('AI Chatbot Ex'), children=[
-					# 		sac.MenuItem("Chatbot (Ex & Ch 3)", icon='filetype-py'),
-					# 		sac.MenuItem("Chatbot with streaming (Ex & Ch 4)", icon='filetype-py'),
-					# 		sac.MenuItem("Prompt Design Template (Ex 5)", icon='filetype-py'),
-					# 		sac.MenuItem("Chatbot with Prompt Design (Ch 5)", icon='filetype-py'),
-					# 		sac.MenuItem("Memory (Ex 6)", icon='filetype-py'),
-					# 		sac.MenuItem("Chatbot with Memory (Ch 6)", icon='filetype-py'),
-					# 		sac.MenuItem("Knowledge Base with RAG (Ex 7)", icon='filetype-py'),
-					# 		sac.MenuItem("Chatbot with Memory & Knowledge Base (Ch 7)", icon='filetype-py'),
-					# 		# sac.MenuItem("Database (Ex 8)", icon='filetype-py'),
-					# 		# sac.MenuItem("Chatbot with Memory & RAG & recorded (Ch 9)", icon='filetype-py'),
-					# 	]),
-					# 	sac.MenuItem(return_function_name('Agent Chatbot Ex','Agent Chatbot(Exercise)'), icon='filetype-py', disabled=is_function_disabled('Agent Chatbot Ex'), children=[
-					# 		sac.MenuItem("Basic Langchain Agent Chatbot (Ex & Ch 10)", icon='filetype-py'),
-					# 		#sac.MenuItem("OpenAI Assistant Chatbot", icon='filetype-py'),
-					# 	]),
-					# 	#sac.MenuItem(return_function_name('Gen AI Prototype Ex', 'GenAi prototype Application(Exercise)'), icon='filetype-py', disabled=is_function_disabled('Gen AI Prototype Ex')),
+
+
+					sac.MenuItem('Coding Exercises', icon='person-fill-gear', children=[
+						sac.MenuItem(return_function_name('Streamlit App Ex','Streamlit App (Exercise)'), icon='filetype-py', disabled=is_function_disabled('Streamlit App Ex'), children=[
+							sac.MenuItem("Python (Ex 0-9 & Ch 1-3)", icon='filetype-py'),
+							sac.MenuItem("First Streamlit App", icon='filetype-py'),]),
+						sac.MenuItem(return_function_name('Rule Based Chatbot Ex','Rule Based Chatbot (Ex & Ch 1)'), icon='filetype-py', disabled=is_function_disabled('Rule Based Chatbot Ex')),
+						sac.MenuItem(return_function_name('Open AI API Call Ex','Open AI API Call (Ex & Ch 2)'), icon='filetype-py', disabled=is_function_disabled('Open AI API Call Ex')),
+						sac.MenuItem(return_function_name('AI Chatbot Ex','AI Chatbot(Exercise)'), icon='filetype-py', disabled=is_function_disabled('AI Chatbot Ex'), children=[
+							sac.MenuItem("Chatbot (Ex & Ch 3)", icon='filetype-py'),
+							sac.MenuItem("Chatbot with streaming (Ex & Ch 4)", icon='filetype-py'),
+							sac.MenuItem("Prompt Design Template (Ex 5)", icon='filetype-py'),
+							sac.MenuItem("Chatbot with Prompt Design (Ch 5)", icon='filetype-py'),
+							sac.MenuItem("Memory (Ex 6)", icon='filetype-py'),
+							sac.MenuItem("Chatbot with Memory (Ch 6)", icon='filetype-py'),
+							sac.MenuItem("Knowledge Base with RAG (Ex 7)", icon='filetype-py'),
+							sac.MenuItem("Chatbot with Memory & Knowledge Base (Ch 7)", icon='filetype-py'),
+							# sac.MenuItem("Database (Ex 8)", icon='filetype-py'),
+							# sac.MenuItem("Chatbot with Memory & RAG & recorded (Ch 9)", icon='filetype-py'),
+						]),
+						sac.MenuItem(return_function_name('Agent Chatbot Ex','Agent Chatbot(Exercise)'), icon='filetype-py', disabled=is_function_disabled('Agent Chatbot Ex'), children=[
+							sac.MenuItem("Basic Langchain Agent Chatbot (Ex & Ch 10)", icon='filetype-py'),
+							#sac.MenuItem("OpenAI Assistant Chatbot", icon='filetype-py'),
+						]),
+						#sac.MenuItem(return_function_name('Gen AI Prototype Ex', 'GenAi prototype Application(Exercise)'), icon='filetype-py', disabled=is_function_disabled('Gen AI Prototype Ex')),
 						
-					# ]),
-					
+					]),
 
 					sac.MenuItem('Types of ChatBots', icon='person-fill-gear', children=[
-						sac.MenuItem(return_function_name('Discussion Chatbot'), icon='people', disabled=is_function_disabled('Discussion Chatbot')),
 						sac.MenuItem(return_function_name('Rule Based Chatbot'), icon='chat-dots', disabled=is_function_disabled('Rule Based Chatbot')),
-						sac.MenuItem(return_function_name('FAQ AI Chatbot'), icon='chat-dots', disabled=is_function_disabled('FAQ AI Chatbot')),
-						sac.MenuItem(return_function_name('Open AI API Call', 'LLM API call'), icon='arrow-left-right', disabled=is_function_disabled('Open AI API Call')),
-						sac.MenuItem(return_function_name('Prompt Designs'), icon='arrow-left-right', disabled=is_function_disabled('Prompt Designs')),
+						sac.MenuItem(return_function_name('Open AI API Call'), icon='chat-dots', disabled=is_function_disabled('Open AI API Call')),
 						sac.MenuItem(return_function_name('AI Chatbot'), icon='chat-dots', disabled=is_function_disabled('AI Chatbot')),
 						sac.MenuItem(return_function_name('Agent Chatbot'), icon='chat-dots', disabled=is_function_disabled('Agent Chatbot')),
 						sac.MenuItem(return_function_name('Chatbot Management', 'Bot & Prompt Management'), icon='wrench', disabled=is_function_disabled('Chatbot Management')),
@@ -531,11 +519,11 @@ def main():
 			ex.prompt_design()
 			ex.basebot_prompt_design_memory()
 			pass
-		elif st.session_state.option == 'RAG (Ex 7)':
+		elif st.session_state.option == 'Knowledge Base with RAG (Ex 7)':
 			# call the RAG function here
 			ex.show_rag_results()
 			pass
-		elif st.session_state.option == 'Chatbot with Memory & RAG (Ch 7)':
+		elif st.session_state.option == 'Chatbot with Memory & Knowledge Base (Ch 7)':
 			# call the openai basebot with memory and RAG function here
 			ex.prompt_design()
 			ex.basebot_prompt_design_memory_rag()
@@ -558,95 +546,58 @@ def main():
 			else:
 				ex.agent_bot()
 
-		# elif st.session_state.option == 'OpenAI Assistant Chatbot':
-		# 	#call the agent chatbot function here
-		# 	if "ASSISTANT_ID" in st.secrets or "MAPBOX_TOKEN" in st.secrets:
-		# 		init_session_state()
-		# 		assistant_demo()
-		# 	else:
-		# 		st.warning("Please enter your Assistant ID and Mapbox Token to enable this feature")
-		# 	pass
+		elif st.session_state.option == 'OpenAI Assistant Chatbot':
+			#call the agent chatbot function here
+			#ASSISTANT_ID = "asst_SN0BhLgX1qI3ztb3JOJ6t52P"
+			#MAPBOX_TOKEN = "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"
+			if "ASSISTANT_ID" in st.secrets or "MAPBOX_TOKEN" in st.secrets:
+				init_session_state()
+				assistant_demo()
+			else:
+				st.warning("Please enter your Assistant ID and Mapbox Token to enable this feature")
+			pass
 
-		#----------------park under prototype application----------------	
-		# elif st.session_state.option == 'GenAi prototype Application(Exercise)':
-		# 	#call the prototype application function here
-		# 	options = sac.buttons(
-		# 					items=[
-		# 						sac.ButtonsItem(label='Prototype Application', icon='app',),
-		# 						sac.ButtonsItem(label='Template 1 - Form', icon='app'),
-		# 						sac.ButtonsItem(label='Template 2 - Chatbot', icon='chat'),
-		# 						sac.ButtonsItem(label='Template 3 - Assistant', icon='chat-left'),
-		# 					], index=0, format_func='title', align='center')
-		# 	if options == 'Prototype Application':
-		# 		ex.prototype_application()
-		# 	elif options == 'Template 1 - Form':
-		# 		tpl.template1_form_with_genai_call()
-		# 	elif options == 'Template 2 - Chatbot':
-		# 		tpl.chatbot_settings()
-		# 		tpl.template2_ragbot()
-		# 	elif options == 'Template 3 - Assistant':
-		# 		if "OPENAI_ASSISTANT" in st.secrets:
-		# 			tpl.template3_openai_assistant()
-		# 		else:
-		# 			st.warning("Please enter or create your OpenAI Assistant API key to enable this feature")
-	
+
+		elif st.session_state.option == 'GenAi prototype Application(Exercise)':
+			#call the prototype application function here
+			options = sac.buttons(
+							items=[
+								sac.ButtonsItem(label='Prototype Application', icon='app',),
+								sac.ButtonsItem(label='Template 1 - Form', icon='app'),
+								sac.ButtonsItem(label='Template 2 - Chatbot', icon='chat'),
+								sac.ButtonsItem(label='Template 3 - Assistant', icon='chat-left'),
+							], index=0, format_func='title', align='center')
+			if options == 'Prototype Application':
+				ex.prototype_application()
+			elif options == 'Template 1 - Form':
+				tpl.template1_form_with_genai_call()
+			elif options == 'Template 2 - Chatbot':
+				tpl.chatbot_settings()
+				tpl.template2_ragbot()
+			elif options == 'Template 3 - Assistant':
+				if "OPENAI_ASSISTANT" in st.secrets:
+					tpl.template3_openai_assistant()
+				else:
+					st.warning("Please enter or create your OpenAI Assistant API key to enable this feature")
+			# ex.prototype_application()
+			# st.divider()
+			# tpl.template1_form_with_genai_call()
+			# st.divider()
+			# tpl.template2_ragbot()
+			# st.divider()
+			# tpl.template3_agent()
+			# st.divider()
+			# tpl.template4_openai_assistant()
 		
 		#========================ZERO CODE workshop code below do not modify========================#
 
 		elif st.session_state.option == 'Rule Based Chatbot':
 			# Code for Rule Based Chatbot - Zerocode
-			if st.session_state.user['profile_id'] == SA:
-				with st.expander("Rule Based Chatbot Settings"):
-					rb_chatbot = st.checkbox("I will delete and initialise training data for rule based chatbot")
-					if st.button("Initialise Training Data") and rb_chatbot:
-						init_training_data()
-					pass
-
-			personal = st.toggle('Switch on to access the Personal Chatbot')
-			if personal:
-				rule_based()
-			else:
-				group_rule_based()
-		elif st.session_state.option == 'Discussion Chatbot':
-			# Code for FAQ AI chatbot
-			if st.session_state.user['profile_id'] == SA:
-				with st.expander("Discussion Bot Settings"):
-					analyse_responses = st.toggle('Switch on to analyse responses')
-					if analyse_responses:
-						discussion_data = extract_and_combine_responses()
-						st.session_state.analyse_discussion = True
-					else:
-						st.session_state.analyse_discussion = False
-			
-					dis_bot = st.checkbox("I will delete and initialise training data for discussion bot")
-					if st.button("Initialise Training Data") and dis_bot:
-						init_training_data()
-					pass
-
-			if st.session_state.analyse_discussion:
-				st.write("Discussion Data: ", discussion_data)
-				prompt = st.session_state.extraction_prompt + "/n" + discussion_data + "/n" + "Please analyse the response and answer the questions below"
-			else:		
-				prompt = st.session_state.discussion_bot
-			discussion_bot("Discussion Bot", prompt)
+			rule_based()
 			pass
-		elif st.session_state.option == 'FAQ AI Chatbot':
-			if st.session_state.user['profile_id'] == SA:
-				with st.expander("FAQ Bot Settings"):
-					faq = st.checkbox("I will delete and initialise training data for FAQ bot")
-					if st.button("Initialise Training Data") and faq:
-						init_training_data()
-					pass
-			# Code for FAQ AI chatbot
-			faq_bot()
-			pass
-		elif st.session_state.option == 'LLM API call':
+		elif st.session_state.option == 'Open AI API Call':
 			# Code for Open AI API Call
 			call_api()
-			pass
-		elif st.session_state.option == 'Prompt Designs':
-			# Code for Open AI API Call
-			prompt_designs_llm()
 			pass
 		elif st.session_state.option == 'Prototype Application':
 			# Code for Prototype Application - Zerocode
@@ -665,7 +616,7 @@ def main():
 
 		elif st.session_state.option == 'AI Chatbot':
 			#Code for AI Chatbot - ZeroCode
-			#st.write("Current Chatbot Template: ", st.session_state.chatbot)
+			st.write("Current Chatbot Template: ", st.session_state.chatbot)
 			#check if API key is entered
 			with st.expander("Chatbot Settings"):
 				vectorstore_selection_interface(st.session_state.user['id'])
@@ -678,10 +629,10 @@ def main():
 							items=[
 								sac.ChipItem(label='Raw Search', icon='search', disabled=vs_flag),
 								sac.ChipItem(label='Enable Memory', icon='memory'),
-								#sac.ChipItem(label='Rating Function', icon='star-fill'),
+								sac.ChipItem(label='Rating Function', icon='star-fill'),
 								sac.ChipItem(label='Capture Responses', icon='camera-fill'),
 								sac.ChipItem(label='Download Responses', icon='download'),
-							], index=[1, 2], format_func='title', radius='sm', size='sm', align='left', variant='light', multiple=True)
+							], index=[1, 2, 3], format_func='title', radius='sm', size='sm', align='left', variant='light', multiple=True)
 				# Update state based on new chip selections
 				raw_search = 'Raw Search' in options
 				st.session_state.memoryless = 'Enable Memory' not in options

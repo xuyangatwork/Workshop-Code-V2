@@ -75,37 +75,48 @@ def pandas_ai(user_id, sch_id, profile):
 
 	else:
 		st.session_state.df = download_data(user_id, sch_id, profile)
-	chart_dir = os.path.join("exports/charts")
-	with st.form("Question"):
 		
+	# Create a unique directory for each user
+	user_chart_dir = os.path.join("exports/charts", str(st.session_state.user['id']))
+
+	if not os.path.exists(user_chart_dir):
+		os.makedirs(user_chart_dir)
+
+	def clear_user_images():
+		# Function to delete existing images in the user's directory
+		for file in os.listdir(user_chart_dir):
+			if file.endswith(".png"):
+				os.remove(os.path.join(user_chart_dir, file))
+
+	with st.form("Question"):
 		question = st.text_input("Question", value="", type="default")
 		submitted = st.form_submit_button("Submit")
 		if submitted:
-			# Check if the file exists and remove it
-			chart_path = os.path.join("exports/charts", "temp_chart.png")
+			clear_user_images()  # Clear existing images in the user's directory
 			with st.spinner():
-				llm =OpenAI(api_token=return_api_key())
+				llm = OpenAI(api_token=return_api_key())
 				df = SmartDataframe(
 					st.session_state.df,
 					config={
 						"llm": llm,
-						"save_charts_path": chart_dir,
+						"save_charts_path": user_chart_dir,
 						"save_charts": True,
 						"verbose": True,
 					},
 				)
-				response = df.chat(
-					question
-				)  # Using 'chat' method based on your context
+				response = df.chat(question)
 
 				# Display the textual response (if any):
 				if response:
 					st.write(response)
-				if os.path.exists(chart_path):
-					st.image(
-						chart_path, caption="Generated Chart", use_column_width=True
-					)
-				# Append the question to the history:
+
+				# Assuming the chart is saved in the user_chart_dir
+				# Find the latest chart (if any)
+				list_of_files = [os.path.join(user_chart_dir, f) for f in os.listdir(user_chart_dir) if f.endswith(".png")]
+				if list_of_files:
+					latest_chart_path = max(list_of_files, key=os.path.getctime)
+					st.image(latest_chart_path, caption="Generated Chart", use_column_width=True)
+
 				st.session_state.prompt_history.append(question)
 
 	if st.session_state.df is not None:
@@ -118,3 +129,4 @@ def pandas_ai(user_id, sch_id, profile):
 	if st.button("Clear"):
 		st.session_state.prompt_history = []
 		st.session_state.df = None
+		clear_user_images()  # Clear images when clearing the session

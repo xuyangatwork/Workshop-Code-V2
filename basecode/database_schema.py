@@ -245,7 +245,7 @@ def create_dbs():
             FOREIGN KEY(user_id) REFERENCES Users(user_id)
         )
         ''')
- #Link vectorestores to profiles
+    #Link vectorestores to profiles
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS Profile_VectorStores (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -256,6 +256,21 @@ def create_dbs():
         )
     ''')
 	
+    #creating a table for chatbot training records
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS Chatbot_Training_Records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        chatbot_type TEXT NOT NULL,
+        chatbot_name TEXT NOT NULL,
+        prompt TEXT NOT NULL,
+        response TEXT NOT NULL,
+        user_id INTEGER NOT NULL,
+        school_id INTEGER NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES Users(user_id),
+        FOREIGN KEY(school_id) REFERENCES Schools(school_id)
+    )
+	''')
+
     #need to create vectorstores for each app function - new table
 
 

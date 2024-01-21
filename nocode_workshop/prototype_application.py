@@ -37,6 +37,7 @@ class ConfigHandler:
 config_handler = ConfigHandler()
 MY_APP = config_handler.get_config_values('Prompt_Design_Templates', 'MY_APP')
 MY_FORM = config_handler.get_config_values('Prompt_Design_Templates', 'MY_FORM')
+MY_APP_ADVANCE = config_handler.get_config_values('Prompt_Design_Templates', 'MY_APP_ADVANCE')
 
 def init_settings():
 	if "form_title" not in st.session_state:
@@ -57,11 +58,11 @@ def form_input():
 		
 	with st.form("my_form"):
 		st.subheader(st.session_state.form_title)
-		q1 = st.text_input(f"Question 1:, {st.session_state.question_1}",key="q_1")
-		q2 = st.text_input(f"Question 2:, {st.session_state.question_2}",key="q_2")
-		q3 = st.text_input(f"Question 3:, {st.session_state.question_3}",key="q_3")
-		q4 = st.text_input(f"Question 4:, {st.session_state.question_4}",key="q_4")
-		q5 = st.text_input(f"Question 5:, {st.session_state.question_5}",key="q_5")
+		q1 = st.text_input(f"Question 1: {st.session_state.question_1}",key="q_1")
+		q2 = st.text_input(f"Question 2: {st.session_state.question_2}",key="q_2")
+		q3 = st.text_input(f"Question 3: {st.session_state.question_3}",key="q_3")
+		q4 = st.text_input(f"Question 4: {st.session_state.question_4}",key="q_4")
+		q5 = st.text_input(f"Question 5: {st.session_state.question_5}",key="q_5")
 
 		# Every form must have a submit button.
 		submitted = st.form_submit_button("Submit")
@@ -91,7 +92,7 @@ def chatbot_settings():
 	k_memory = st.number_input("K Memory", value=st.session_state.k_memory, min_value=0, max_value=5, step=1)
 	presence_penalty = st.number_input("Presence Penalty", value=st.session_state.presence_penalty, min_value=-2.0, max_value=2.0, step=0.1)
 	frequency_penalty = st.number_input("Frequency Penalty", value=st.session_state.frequency_penalty, min_value=-2.0, max_value=2.0, step=0.1)
-	if st.button("Update Chatbot Settings", key = 1):
+	if st.button("Update Chatbot Settings", key = 6):
 		st.session_state.temp = temp
 		st.session_state.k_memory = k_memory
 		st.session_state.presence_penalty = presence_penalty
@@ -100,21 +101,23 @@ def chatbot_settings():
 
 def prompt_template_settings():
 	st.info("You can use the following variables which is link to your first 5 questions in your form prompt inputs: {q1}, {q2}, {q3}, {q4}, {q5}")
-	if st.checkbox("Use form design default template"):
+	if st.checkbox("Use form design default template", key = 2):
 		st.session_state.my_app_template = MY_APP
 	form_input = st.text_area("Enter your form prompt:", value = st.session_state.my_app_template, height=300 )
-	if st.checkbox("Use default app template"):
+	if st.checkbox("Use default app template", key = 3):
 		st.session_state.my_form_template = MY_FORM
 	st.info("Enter your app prompt template here, you can add the following variables: {source}, {resource} ")
 	prompt_template = st.text_area("Enter your application prompt design", value = st.session_state.my_form_template, height=300)
-	if st.button("Update Prompt Template", key = 2):
+	if st.button("Update Prompt Template", key = 1):
 		st.session_state.my_app_template = form_input
 		st.session_state.my_form_template = prompt_template
 
 def advance_prompt_template_settings():
 	st.info("You can use the following variables in your prompt template: {mem}, {source}, {resource}")
+	if st.checkbox("Use default app template", key=4):
+		st.session_state.my_app_template_advance = MY_APP_ADVANCE
 	prompt_template = st.text_area("Enter your prompt template here:", value = st.session_state.my_app_template_advance, height=300)
-	if st.button("Update Prompt Template"):
+	if st.button("Update Prompt Template", key = 5):
 		st.session_state.my_app_template_advance = prompt_template
 
 def advance_prompt_template(memory, source, resource):
@@ -130,6 +133,7 @@ def form_template(source, resource):
 	return text.format(source=source, resource=resource)
 
 def my_first_app(bot_name):
+	init_settings()
 	st.subheader("Protyping a chatbot")
 	with st.expander("Prototype Settings"):
 		st.write("Current Form Template: ", st.session_state.my_form_template)
@@ -141,6 +145,7 @@ def my_first_app(bot_name):
 		basic_bot(form_output , bot_name)
 
 def my_first_app_advance(bot_name):
+	init_settings()
 	st.subheader("Protyping a chatbot")
 	with st.expander("Prototype Settings"):
 		st.write("Current Prompt Template: ", st.session_state.my_app_template_advance)
@@ -279,9 +284,9 @@ def template_prompt(prompt, prompt_template):
 def basic_bot(prompt, bot_name= "Prototype"):
 	try:
 		if prompt:
-			if "memory" not in st.session_state:
-				st.session_state.memory = ConversationBufferWindowMemory(k=st.session_state.k_memory)
-			st.session_state.msg.append({"role": "user", "content": prompt})
+			# if "memory" not in st.session_state:
+			# 	st.session_state.memory = ConversationBufferWindowMemory(k=st.session_state.k_memory)
+			#st.session_state.msg.append({"role": "user", "content": prompt})
 			message_placeholder = st.empty()
 			#check if there is any knowledge base
 			if st.session_state.vs:
@@ -299,10 +304,10 @@ def basic_bot(prompt, bot_name= "Prototype"):
 				message_placeholder.markdown(full_response + "▌")
 	
 			message_placeholder.markdown(full_response)
-			st.session_state.msg.append({"role": "assistant", "content": full_response})
-			st.session_state["memory"].save_context({"input": prompt},{"output": full_response})
+			#st.session_state.msg.append({"role": "assistant", "content": full_response})
+			#st.session_state["memory"].save_context({"input": prompt},{"output": full_response})
 			# This is to send the lesson_plan to the lesson design map
-			st.session_state.lesson_plan  = full_response
+			#st.session_state.lesson_plan  = full_response
 			 # Insert data into the table
 			now = datetime.now() # Using ISO format for date
 			num_tokens = len(full_response + prompt)*1.3

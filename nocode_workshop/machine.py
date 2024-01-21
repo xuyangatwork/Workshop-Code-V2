@@ -88,55 +88,148 @@ def plot_predictions(df_btc_predict, tree, lr, column_name, future_days, X):
     st.pyplot(plt)
     plt.clf()
 
-def load_teachable_machines():
-    # Step 1: Streamlit interface for file upload
-    uploaded_file = st.file_uploader("Upload a zip file containing labels.txt and keras_model.h5", type="zip")
+def load_default_model():
+    st.write("Loading default model...")
+    unzip_directory = "samples"
+    sample_model_zip = os.path.join(unzip_directory, 'sample_model.zip')
 
-    # Step 2: Unzip if file uploaded
+    if os.path.exists(sample_model_zip):
+        unzip_file(sample_model_zip, unzip_directory)
+        label_file = os.path.join(unzip_directory, 'labels.txt')
+        model_file = os.path.join(unzip_directory, 'keras_model.h5')
+        return label_file, model_file
+    else:
+        st.error("Sample model file not found.")
+        return None, None
+
+def upload_model():
+    st.write("Upload your model zip file.")
+    uploaded_file = st.file_uploader("Upload a zip file containing labels.txt and keras_model.h5", type="zip")
+    
     if uploaded_file is not None:
         unzip_directory = "datafiles"
         if not os.path.exists(unzip_directory):
             os.makedirs(unzip_directory)
-        
-        # Unzipping
-        unzip_file(uploaded_file, unzip_directory)
 
-        # Step 3: Loading data from unzipped files
+        unzip_file(uploaded_file, unzip_directory)
         label_file = os.path.join(unzip_directory, 'labels.txt')
         model_file = os.path.join(unzip_directory, 'keras_model.h5')
+        return label_file, model_file
+    else:
+        return None, None
 
-        if os.path.exists(label_file) and os.path.exists(model_file):
-            # Import the class labels from labels.txt and assign to a list
-            classes = [x.split(' ')[1].replace('\n', '') for x in open(label_file, 'r').readlines()]
+def load_teachable_machines():
+    choice = st.radio("Choose an option:", ('Load Default Model', 'Upload Your Model'))
+
+    label_file, model_file = None, None
+    if choice == 'Load Default Model':
+        label_file, model_file = load_default_model()
+    elif choice == 'Upload Your Model':
+        label_file, model_file = upload_model()
+
+    if label_file and model_file and os.path.exists(label_file) and os.path.exists(model_file):
+        # Import the class labels from labels.txt and assign to a list
+        classes = [x.split(' ')[1].replace('\n', '') for x in open(label_file, 'r').readlines()]
+        
+        # Load the Model
+        model = load_model(model_file, compile=False)
+
+        # Continue with the Streamlit interface
+        st.title(f'Is it {classes[0]} or {classes[1]}!?')
+        img_file_buffer = st.camera_input(f"Take a picture of {classes[0]} or {classes[1]}")
+        # Process image and get predictions
+        if img_file_buffer is not None:
+            bytes_data = img_file_buffer.getvalue()
+            cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+            image = cv2.resize(cv2_img, (224, 224), interpolation=cv2.INTER_AREA)
+            image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
+            image = (image / 127.5) - 1
+            probabilities = model.predict(image)
+
+            if probabilities[0,0] > 0.8:
+                prob = round(probabilities[0,0] * 100,2)
+                st.write(f"I'm {prob}% sure that's {classes[0]}!")
+            elif probabilities[0,1] > 0.8:
+                prob = round(probabilities[0,1] * 100,2)
+                st.write(f"I'm {prob}% sure that's {classes[1]}!")
+            else:
+                st.write("I'm not confident that I know what this is! ")
             
-            # Load the Model
-            model = load_model(model_file, compile=False)
+            st.balloons()
+    else:
+        
+        st.warning("Please upload a zip file or load the default model.") 
 
-            # Continue with the Streamlit interface
-            st.title(f'Is it {classes[0]} or {classes[1]}!?')
-            img_file_buffer = st.camera_input(f"Take a picture of {classes[0]} or {classes[1]}")
 
-            # Process image and get predictions
-            if img_file_buffer is not None:
-                bytes_data = img_file_buffer.getvalue()
-                cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-                image = cv2.resize(cv2_img, (224, 224), interpolation=cv2.INTER_AREA)
-                image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
-                image = (image / 127.5) - 1
-                probabilities = model.predict(image)
+# def load_teachable_machines():
+#     # Step 1: Streamlit interface for file upload
+#     uploaded_file = st.file_uploader("Upload a zip file containing labels.txt and keras_model.h5", type="zip")
+#     load_model_button = st.button("Load Model")
 
-                if probabilities[0,0] > 0.8:
-                    prob = round(probabilities[0,0] * 100,2)
-                    st.write(f"I'm {prob}% sure that's {classes[0]}!")
-                elif probabilities[0,1] > 0.8:
-                    prob = round(probabilities[0,1] * 100,2)
-                    st.write(f"I'm {prob}% sure that's {classes[1]}!")
-                else:
-                    st.write("I'm not confident that I know what this is! ")
+#     # Initialize variables
+#     label_file = None
+#     model_file = None
 
-                st.balloons()
-        else:
-            st.warning("The uploaded zip file does not contain the required files.")
+#     # Check if the Load Model button is clicked
+#     if load_model_button:
+#         st.write("Loading default model...")
+#         unzip_directory = "samples"
+#         sample_model_zip = os.path.join(unzip_directory, 'sample_model.zip')
+
+#         # Check if sample model zip file exists
+#         if os.path.exists(sample_model_zip):
+#             unzip_file(sample_model_zip, unzip_directory)
+#             label_file = os.path.join(unzip_directory, 'labels.txt')
+#             model_file = os.path.join(unzip_directory, 'keras_model.h5')
+#         else:
+#             st.error("Sample model file not found.")
+
+#     # Step 2: Unzip if file uploaded
+#     if uploaded_file is not None:
+#         unzip_directory = "datafiles"
+#         if not os.path.exists(unzip_directory):
+#             os.makedirs(unzip_directory)
+        
+#         # Unzipping
+#         unzip_file(uploaded_file, unzip_directory)
+
+#         # Update file paths for uploaded model
+#         label_file = os.path.join(unzip_directory, 'labels.txt')
+#         model_file = os.path.join(unzip_directory, 'keras_model.h5')
+
+#     # Step 3: Loading data from unzipped files
+#     if label_file and model_file and os.path.exists(label_file) and os.path.exists(model_file):
+#         # Import the class labels from labels.txt and assign to a list
+#         classes = [x.split(' ')[1].replace('\n', '') for x in open(label_file, 'r').readlines()]
+        
+#         # Load the Model
+#         model = load_model(model_file, compile=False)
+
+#         # Continue with the Streamlit interface
+#         st.title(f'Is it {classes[0]} or {classes[1]}!?')
+#         img_file_buffer = st.camera_input(f"Take a picture of {classes[0]} or {classes[1]}")
+#         # Process image and get predictions
+#         if img_file_buffer is not None:
+#             bytes_data = img_file_buffer.getvalue()
+#             cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+#             image = cv2.resize(cv2_img, (224, 224), interpolation=cv2.INTER_AREA)
+#             image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
+#             image = (image / 127.5) - 1
+#             probabilities = model.predict(image)
+
+#             if probabilities[0,0] > 0.8:
+#                 prob = round(probabilities[0,0] * 100,2)
+#                 st.write(f"I'm {prob}% sure that's {classes[0]}!")
+#             elif probabilities[0,1] > 0.8:
+#                 prob = round(probabilities[0,1] * 100,2)
+#                 st.write(f"I'm {prob}% sure that's {classes[1]}!")
+#             else:
+#                 st.write("I'm not confident that I know what this is! ")
+            
+#             st.balloons()
+#     else:
+#         if not load_model_button:
+#             st.warning("The uploaded zip file does not contain the required files.") 
 
 def unzip_file(zip_path, extract_to):
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
