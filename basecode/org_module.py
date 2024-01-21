@@ -106,7 +106,7 @@ def initialise_admin_account():
 		cursor.execute('''
 			INSERT INTO Users
 			(username, password, school_id, profile_id, org_id) 
-			VALUES (?, ?, ?, ?)
+			VALUES (?, ?, ?, ?, ?)
 		''', (SUPER, hash_password(SUPER_PWD),0, SA, ALL_ORG))
 
 		print("super_admin account created")
