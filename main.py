@@ -64,19 +64,26 @@ from basecode.users_module import (
 	link_profiles_to_vectorstore_interface
 )
 
+from lcc.lesson_plan import (
+	lesson_collaborator,
+	lesson_bot,
+	lesson_design_options,
+	lesson_commentator,
+)
+
 from basecode.bot_settings import bot_settings_interface, load_bot_settings
-from nocode_workshop.openai_features import generate_image, record_myself, upload_audio, analyse_image, text_to_speech
+from nocode_workshop.openai_features import generate_image, record_myself, upload_audio, analyse_image, text_to_speech, images_features,voice_features
 from PIL import Image
 import configparser
 import ast
 
 def download_nltk_data_if_absent(package_name):
-    try:
-        # Try loading the package to see if it exists
-        nltk.data.find('tokenizers/' + package_name)
-    except LookupError:
-        # If the package doesn't exist, download it
-        nltk.download(package_name)
+	try:
+		# Try loading the package to see if it exists
+		nltk.data.find('tokenizers/' + package_name)
+	except LookupError:
+		# If the package doesn't exist, download it
+		nltk.download(package_name)
 
 download_nltk_data_if_absent('punkt')
 
@@ -155,7 +162,7 @@ def main():
 			st.session_state.title_page = DEFAULT_TITLE 
 
 		st.title(st.session_state.title_page)
-		sac.divider(label='ETD & ITD MOE Project', icon='house', align='center', direction='horizontal', dashed=False, bold=False)
+		sac.divider(label='Exploring Generative Artificial Intelligence - Author Joe Tay', icon='house', align='center', direction='horizontal', dashed=False, bold=False)
 		
 		if "api_key" not in st.session_state:
 			st.session_state.api_key = ""
@@ -323,7 +330,49 @@ def main():
 					# 	#sac.MenuItem(return_function_name('Gen AI Prototype Ex', 'GenAi prototype Application(Exercise)'), icon='filetype-py', disabled=is_function_disabled('Gen AI Prototype Ex')),
 						
 					# ]),
-					
+					sac.MenuItem(
+                            "Education Tools",
+                            icon="person-fill-gear",
+                            children=[
+                                sac.MenuItem(
+                                    return_function_name(
+                                        "Lesson Design Facilitator",
+                                        "Lesson Collaborator (Chatbot)",
+                                    ),
+                                    icon="chat-text",
+                                    disabled=is_function_disabled(
+                                        "Lesson Design Facilitator"
+                                    ),
+                                ),
+                                sac.MenuItem(
+                                    return_function_name(
+                                        "Lesson Collaborator",
+                                        "Lesson Collaborator (Scaffolded)",
+                                    ),
+                                    icon="pencil-square",
+                                    disabled=is_function_disabled(
+                                        "Lesson Collaborator"
+                                    ),
+                                ),
+                                sac.MenuItem(
+                                    return_function_name(
+                                        "Lesson Commentator", "Lesson Commentator"
+                                    ),
+                                    icon="chat-left-dots",
+                                    disabled=is_function_disabled("Lesson Commentator"),
+                                ),
+                                # Jun Wen: Hiding this menu item as advised by Joe.
+                                # sac.MenuItem(
+                                #     return_function_name(
+                                #         "Lesson Designer Map", "Lesson Designer Map"
+                                #     ),
+                                #     icon="diagram-2",
+                                #     disabled=is_function_disabled(
+                                #         "Lesson Designer Map"
+                                #     ),
+                                # ),
+                            ],
+                        ),
 
 					sac.MenuItem('Types of ChatBots', icon='person-fill-gear', children=[
 						sac.MenuItem(return_function_name('Discussion Chatbot'), icon='people', disabled=is_function_disabled('Discussion Chatbot')),
@@ -424,175 +473,278 @@ def main():
 		elif st.session_state.option == 'Image Analyser and Generator':
 			# Code for Image Generator
 			st.subheader(f":green[{st.session_state.option}]")
-			generate_image()
-			st.divider()
-			analyse_image()
+			images_features()
+			# generate_image()
+			# st.divider()
+			# analyse_image()
 			pass
 		elif st.session_state.option == 'Voice Analyser and Generator':
 			st.subheader(f":green[{st.session_state.option}]")
 			# Code for Voice
-			upload_audio()
-			st.divider()
-			record_myself()
-			st.divider()
-			text_to_speech()
+			voice_features()
+			# upload_audio()
+			# st.divider()
+			# record_myself()
+			# st.divider()
+			# text_to_speech()
 			pass
 		
 		#========================Modify the workshop code below this line========================#
 
-		elif st.session_state.option == 'Python (Ex 0-9 & Ch 1-3)':
-			# Code for python exercises
-			st.subheader(f":green[{st.session_state.option}]")
-			st.divider()
-			st.write(":blue[Exercise 0  - Hello world function]")
-			ex.hello_world()
-			st.divider()
-			st.write(":blue[Exercise 1  - Input]")
-			ex.input_exercise()
-			st.divider()
-			st.write(":blue[Exercise 2  - Button]")
-			ex.button_exercise()
-			st.divider()
-			st.write(":blue[Exercise 3 - Using if else]")
-			ex.using_if_else()
-			st.divider()
-			st.write(":blue[Challenge 1 - Create a button and input application]")
-			ex.button_input_exercise()
-			st.divider()
-			st.write(":blue[Exercise 4 - Using Session State]")
-			ex.using_session_state()
-			st.divider()
-			st.write(":blue[Exercise 5 - rule based question and answer]")
-			ex.rule_based_question_answering()
-			st.divider()
-			st.write(":blue[Challenge 2 - rule based question and answer with session state]")
-			ex.rule_based_question_answering_challenge()
-			st.divider()
-			st.write(":blue[Exercise 6 - Data Structure in python]")
-			ex.simple_data_structure()
-			st.divider()
-			st.write(":blue[Exercise 7 - Displaying data structure]")
-			ex.display_dictionary_in_dataframe()
-			st.divider()
-			st.write(":blue[Exercise 8 - For loop]")
-			ex.loop_exercise()
-			st.divider()
-			st.write(":blue[Exercise 9 - Streamlit form and widgets]")
-			ex.streamlit_form_exercise()
-			st.divider()
-			st.write(":blue[Challenge 3 - Form input into dictionary and show all the inputs]")
-			ex.append_form_data_to_list()
-			st.divider()
+		# elif st.session_state.option == 'Python (Ex 0-9 & Ch 1-3)':
+		# 	# Code for python exercises
+		# 	st.subheader(f":green[{st.session_state.option}]")
+		# 	st.divider()
+		# 	st.write(":blue[Exercise 0  - Hello world function]")
+		# 	ex.hello_world()
+		# 	st.divider()
+		# 	st.write(":blue[Exercise 1  - Input]")
+		# 	ex.input_exercise()
+		# 	st.divider()
+		# 	st.write(":blue[Exercise 2  - Button]")
+		# 	ex.button_exercise()
+		# 	st.divider()
+		# 	st.write(":blue[Exercise 3 - Using if else]")
+		# 	ex.using_if_else()
+		# 	st.divider()
+		# 	st.write(":blue[Challenge 1 - Create a button and input application]")
+		# 	ex.button_input_exercise()
+		# 	st.divider()
+		# 	st.write(":blue[Exercise 4 - Using Session State]")
+		# 	ex.using_session_state()
+		# 	st.divider()
+		# 	st.write(":blue[Exercise 5 - rule based question and answer]")
+		# 	ex.rule_based_question_answering()
+		# 	st.divider()
+		# 	st.write(":blue[Challenge 2 - rule based question and answer with session state]")
+		# 	ex.rule_based_question_answering_challenge()
+		# 	st.divider()
+		# 	st.write(":blue[Exercise 6 - Data Structure in python]")
+		# 	ex.simple_data_structure()
+		# 	st.divider()
+		# 	st.write(":blue[Exercise 7 - Displaying data structure]")
+		# 	ex.display_dictionary_in_dataframe()
+		# 	st.divider()
+		# 	st.write(":blue[Exercise 8 - For loop]")
+		# 	ex.loop_exercise()
+		# 	st.divider()
+		# 	st.write(":blue[Exercise 9 - Streamlit form and widgets]")
+		# 	ex.streamlit_form_exercise()
+		# 	st.divider()
+		# 	st.write(":blue[Challenge 3 - Form input into dictionary and show all the inputs]")
+		# 	ex.append_form_data_to_list()
+		# 	st.divider()
 
-			# Call the python exercises function here
-			pass
-		elif st.session_state.option == 'First Streamlit App':
-			# Code for Streamlit App Exercise
-			# Call the streamlit app exercise function here
-			ex.streamlit_app()
+		# 	# Call the python exercises function here
+		# 	pass
+		# elif st.session_state.option == 'First Streamlit App':
+		# 	# Code for Streamlit App Exercise
+		# 	# Call the streamlit app exercise function here
+		# 	ex.streamlit_app()
 			
-			pass
-		elif st.session_state.option == 'Rule Based Chatbot (Ex & Ch 1)':
-			# Code for Rule Based Chatbot Exercise
-			# Call the rule based chatbot exercise function here
-			ex.rule_based_chatbot()
-			pass
-		elif st.session_state.option == 'Open AI API Call (Ex & Ch 2)':
-			# call the API call exercise function here
-			if st.button("Call API"):
-				ex.api_call_exercise()
-			st.divider()
-			# Call the API challenge function here
-			ex.call_api_challenge()
-			pass
-		elif st.session_state.option == 'Chatbot (Ex & Ch 3)':
-			# call the API call exercise function here
-			ex.ai_chatbot()
-			pass
-		elif st.session_state.option == 'Chatbot with streaming (Ex & Ch 4)':
-			# call the openai basebot with streaming function here
-			ex.basebot()
-			pass
-		elif st.session_state.option == 'Prompt Design Template (Ex 5)':
-			# call the prompt design function here
-			ex.prompt_design()
-			pass
-		elif st.session_state.option == 'Chatbot with Prompt Design (Ch 5)':
-			# call the openai basebot with prompt design function here
-			ex.prompt_design()
-			ex.basebot_prompt_design()
-			pass
-		elif st.session_state.option == 'Memory (Ex 6)':
-			# call the memory function here
-			ex.return_memory()
-			pass
-		elif st.session_state.option == 'Chatbot with Memory (Ch 6)':
-			# call the openai basebot with memory function here
-			ex.prompt_design()
-			ex.basebot_prompt_design_memory()
-			pass
-		elif st.session_state.option == 'RAG (Ex 7)':
-			# call the RAG function here
-			ex.show_rag_results()
-			pass
-		elif st.session_state.option == 'Chatbot with Memory & RAG (Ch 7)':
-			# call the openai basebot with memory and RAG function here
-			ex.prompt_design()
-			ex.basebot_prompt_design_memory_rag()
-			pass
-		elif st.session_state.option == 'Database (Ex 8)':
-			# call the database function here
-			ex.initialise()
-			pass
-		elif st.session_state.option == 'Chatbot with Memory & RAG & recorded (Ch 9)':
-			# call the openai basebot with memory and RAG function and recorded data here
-			ex.prompt_design()
-			ex.basebot_prompt_design_memory_rag_data()
-			pass
-
-		elif st.session_state.option == 'Basic Langchain Agent Chatbot (Ex & Ch 10)':
-			#call the agent chatbot function here
-			on = st.toggle('Switch on to access the More Tools Agent')
-			if on:
-				ex.agent_bot_with_more_tools()
-			else:
-				ex.agent_bot()
-
-		# elif st.session_state.option == 'OpenAI Assistant Chatbot':
-		# 	#call the agent chatbot function here
-		# 	if "ASSISTANT_ID" in st.secrets or "MAPBOX_TOKEN" in st.secrets:
-		# 		init_session_state()
-		# 		assistant_demo()
-		# 	else:
-		# 		st.warning("Please enter your Assistant ID and Mapbox Token to enable this feature")
+		# 	pass
+		# elif st.session_state.option == 'Rule Based Chatbot (Ex & Ch 1)':
+		# 	# Code for Rule Based Chatbot Exercise
+		# 	# Call the rule based chatbot exercise function here
+		# 	ex.rule_based_chatbot()
+		# 	pass
+		# elif st.session_state.option == 'Open AI API Call (Ex & Ch 2)':
+		# 	# call the API call exercise function here
+		# 	if st.button("Call API"):
+		# 		ex.api_call_exercise()
+		# 	st.divider()
+		# 	# Call the API challenge function here
+		# 	ex.call_api_challenge()
+		# 	pass
+		# elif st.session_state.option == 'Chatbot (Ex & Ch 3)':
+		# 	# call the API call exercise function here
+		# 	ex.ai_chatbot()
+		# 	pass
+		# elif st.session_state.option == 'Chatbot with streaming (Ex & Ch 4)':
+		# 	# call the openai basebot with streaming function here
+		# 	ex.basebot()
+		# 	pass
+		# elif st.session_state.option == 'Prompt Design Template (Ex 5)':
+		# 	# call the prompt design function here
+		# 	ex.prompt_design()
+		# 	pass
+		# elif st.session_state.option == 'Chatbot with Prompt Design (Ch 5)':
+		# 	# call the openai basebot with prompt design function here
+		# 	ex.prompt_design()
+		# 	ex.basebot_prompt_design()
+		# 	pass
+		# elif st.session_state.option == 'Memory (Ex 6)':
+		# 	# call the memory function here
+		# 	ex.return_memory()
+		# 	pass
+		# elif st.session_state.option == 'Chatbot with Memory (Ch 6)':
+		# 	# call the openai basebot with memory function here
+		# 	ex.prompt_design()
+		# 	ex.basebot_prompt_design_memory()
+		# 	pass
+		# elif st.session_state.option == 'RAG (Ex 7)':
+		# 	# call the RAG function here
+		# 	ex.show_rag_results()
+		# 	pass
+		# elif st.session_state.option == 'Chatbot with Memory & RAG (Ch 7)':
+		# 	# call the openai basebot with memory and RAG function here
+		# 	ex.prompt_design()
+		# 	ex.basebot_prompt_design_memory_rag()
+		# 	pass
+		# elif st.session_state.option == 'Database (Ex 8)':
+		# 	# call the database function here
+		# 	ex.initialise()
+		# 	pass
+		# elif st.session_state.option == 'Chatbot with Memory & RAG & recorded (Ch 9)':
+		# 	# call the openai basebot with memory and RAG function and recorded data here
+		# 	ex.prompt_design()
+		# 	ex.basebot_prompt_design_memory_rag_data()
 		# 	pass
 
-		#----------------park under prototype application----------------	
-		# elif st.session_state.option == 'GenAi prototype Application(Exercise)':
-		# 	#call the prototype application function here
-		# 	options = sac.buttons(
-		# 					items=[
-		# 						sac.ButtonsItem(label='Prototype Application', icon='app',),
-		# 						sac.ButtonsItem(label='Template 1 - Form', icon='app'),
-		# 						sac.ButtonsItem(label='Template 2 - Chatbot', icon='chat'),
-		# 						sac.ButtonsItem(label='Template 3 - Assistant', icon='chat-left'),
-		# 					], index=0, format_func='title', align='center')
-		# 	if options == 'Prototype Application':
-		# 		ex.prototype_application()
-		# 	elif options == 'Template 1 - Form':
-		# 		tpl.template1_form_with_genai_call()
-		# 	elif options == 'Template 2 - Chatbot':
-		# 		tpl.chatbot_settings()
-		# 		tpl.template2_ragbot()
-		# 	elif options == 'Template 3 - Assistant':
-		# 		if "OPENAI_ASSISTANT" in st.secrets:
-		# 			tpl.template3_openai_assistant()
-		# 		else:
-		# 			st.warning("Please enter or create your OpenAI Assistant API key to enable this feature")
+		# elif st.session_state.option == 'Basic Langchain Agent Chatbot (Ex & Ch 10)':
+		# 	#call the agent chatbot function here
+		# 	on = st.toggle('Switch on to access the More Tools Agent')
+		# 	if on:
+		# 		ex.agent_bot_with_more_tools()
+		# 	else:
+		# 		ex.agent_bot()
+
 	
 		
-		#========================ZERO CODE workshop code below do not modify========================#
+		#========================Education Tools========================#
+		elif st.session_state.option == "Lesson Collaborator (Chatbot)":
+			st.subheader(f":green[{st.session_state.option}]")
+			choice = sac.buttons(
+				[
+					sac.ButtonsItem(
+						label="Collaborator Mode", icon="person-hearts", color="green"
+					),
+					sac.ButtonsItem(label="Default", icon="person-fill", color="blue"),
+					sac.ButtonsItem(
+						label="Commentator Mode", icon="person-plus-fill", color="red"
+					),
+				],
+				index=st.session_state.chatbot_index,
+				format_func="title",
+				align="center",
+				size="small",
+				type="default",
+			)
+			sac.divider(
+				label="Chabot Settings",
+				icon="robot",
+				align="center",
+			)
 
+			# st.session_state.chatbot are prompt designs that are configured in config.ini
+			if choice == "Collaborator Mode":
+				st.session_state.chatbot = st.session_state.collaborator_mode
+			elif choice == "Default Chatbot":  # remove the chatbot template
+				st.session_state.chatbot = st.session_state.lesson_default
+			elif choice == "Commentator Mode":
+				st.session_state.chatbot = st.session_state.commentator_mode
+
+			# check if API key is entered
+			with st.expander("Lesson Designer Settings"):
+				vectorstore_selection_interface(st.session_state.user["id"])
+				# new options --------------------------------------------------------
+				if st.session_state.vs:
+					vs_flag = False
+				else:
+					vs_flag = True
+
+				options = sac.chip(
+					items=[
+						sac.ChipItem(label="Raw Search", icon="search", disabled=vs_flag),
+						sac.ChipItem(label="Enable Memory", icon="memory"),
+						sac.ChipItem(label="Capture Responses", icon="camera-fill"),
+						sac.ChipItem(label="Download Responses", icon="download"),
+					],
+					index=[1, 2],
+					format_func="title",
+					radius="sm",
+					size="sm",
+					align="left",
+					variant="light",
+					multiple=True,
+				)
+				# Update state based on new chip selections
+				raw_search = "Raw Search" in options
+				st.session_state.memoryless = "Enable Memory" not in options
+				st.session_state.rating = "Rating Function" in options
+				st.session_state.download_response_flag = "Capture Responses" in options
+				preview_download_response = "Download Responses" in options
+
+				clear = sac.switch(
+					label="Clear Chat", value=False, align="start", position="left"
+				)
+				if clear == True:
+					clear_session_states()
+				if preview_download_response:
+					complete_my_lesson()
+
+			if st.session_state.vs:  # chatbot with knowledge base
+				if raw_search == True:
+					search_bot()
+				else:
+					if st.session_state.memoryless:
+						# memoryless chatbot with knowledge base but no memory
+						basebot_qa(LESSON_BOT)
+					else:
+						# chatbot with knowledge base and memory
+						basebot_qa_memory(LESSON_BOT)
+			else:  # chatbot with no knowledge base
+				if st.session_state.memoryless:
+					# memoryless chatbot with no knowledge base and no memory
+					basebot(LESSON_BOT)
+				else:
+					# chatbot with no knowledge base but with memory
+					basebot_memory(LESSON_BOT)
+
+		elif st.session_state.option == "Lesson Collaborator (Scaffolded)":
+			st.session_state.start = 4
+			st.subheader(f":green[{st.session_state.option}]")
+			container = st.container()
+			with container:
+				st.session_state.lesson_col_prompt = lesson_collaborator()
+				# on = sac.buttons([sac.ButtonsItem(label=f"Continue Conversation at {LESSON_BOT}", color='#40826D')], format_func='title', index=None, size='small',type='primary')
+				on = sac.switch(
+					label=f"Continue Conversation at {LESSON_BOT}",
+					value=False,
+					align="start",
+					position="left",
+				)
+				if on:
+					st.session_state.start = 3
+					st.session_state.option = LESSON_BOT
+					st.session_state.chatbot = st.session_state.collaborator_mode
+					st.session_state.chatbot_index = 0
+					container.empty()
+					st.rerun()
+				if st.session_state.lesson_col_prompt:
+					# st.write("I am here", st.session_state.lesson_col_prompt)
+					lesson_bot(
+						st.session_state.lesson_col_prompt,
+						st.session_state.lesson_collaborator,
+						LESSON_COLLAB,
+					)
+					lesson_design_options()
+
+		elif st.session_state.option == "Lesson Commentator":
+			st.session_state.start = 5
+			st.subheader(f":green[{st.session_state.option}]")
+			container1 = st.container()
+
+			with container1:
+				# on = sac.buttons([sac.ButtonsItem(label=f"Continue Conversation at {LESSON_BOT}", color='#40826D')], format_func='title', index=None, size='small',type='primary')
+				st.session_state.lesson_col_prompt = lesson_commentator()
+				on = sac.switch(
+					label=f"Continue Conversation at {LESSON_BOT}",
+					value=False,
+					align="start",
+					position="left",
+				)
+		#========================Workshop Tools=======================================================#
 		elif st.session_state.option == 'Rule Based Chatbot':
 			# Code for Rule Based Chatbot - Zerocode
 			if st.session_state.user['profile_id'] == SA:

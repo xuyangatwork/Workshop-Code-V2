@@ -123,6 +123,7 @@ def generate_mindmap(prompt):
     try:
         os.environ["OPENAI_API_KEY"] = return_api_key()
         # Generate response using OpenAI API
+
         response = client.chat.completions.create(
                                         model=st.session_state.openai_model, 
                                         messages=[{"role": "user", "content": prompt}],
@@ -130,8 +131,8 @@ def generate_mindmap(prompt):
                                         presence_penalty=st.session_state.presence_penalty, #settings option
                                         frequency_penalty=st.session_state.frequency_penalty #settings option
                                         )
-        if response['choices'][0]['message']['content'] != None:
-            msg = response['choices'][0]['message']['content']
+        if response.choices[0].message.content != None:
+            msg = response.choices[0].message.content
             st.text(msg)
            
             extracted_code = extract_mermaid_syntax(msg)
@@ -199,9 +200,9 @@ def generate_plantuml_mindmap(prompt):
                                         presence_penalty=st.session_state.presence_penalty, #settings option
                                         frequency_penalty=st.session_state.frequency_penalty #settings option
                                         )
-        if response['choices'][0]['message']['content'] != None:
-            msg = response['choices'][0]['message']['content']
-            
+        if response.choices[0].message.content != None:
+            msg = response.choices[0].message.content
+            st.text(msg)
             p_syntax = re.search(r'@startmindmap.*?@endmindmap', msg, re.DOTALL).group()
             modified_syntax = re.sub(r'(\*+) \[', r'\1[', p_syntax)
             return modified_syntax
