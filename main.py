@@ -301,8 +301,8 @@ def main():
 
 					sac.MenuItem('GenAI Features & Apps', icon='book', children=[
 						sac.MenuItem(return_function_name('AI Analytics'), icon='graph-up', disabled=is_function_disabled('AI Analytics')),
-						sac.MenuItem(return_function_name('Image', 'Image Capbilities'), icon='camera', disabled=is_function_disabled('Image')),
-						sac.MenuItem(return_function_name('Voice','Voice Capbilities'), icon='mic',disabled=is_function_disabled('Voice')),
+						sac.MenuItem(return_function_name('Image', 'Image Capabilities'), icon='camera', disabled=is_function_disabled('Image')),
+						sac.MenuItem(return_function_name('Voice','Voice Capabilities'), icon='mic',disabled=is_function_disabled('Voice')),
 					]),	
 					#=================remove for coding exercises=================#
 					# sac.MenuItem('Coding Exercises', icon='person-fill-gear', children=[
@@ -470,7 +470,7 @@ def main():
 			st.subheader(f":green[{st.session_state.option}]")
 			pandas_ai(st.session_state.user['id'], st.session_state.user['school_id'], st.session_state.user['profile_id'])
 			pass
-		elif st.session_state.option == 'Image Capbilities':
+		elif st.session_state.option == 'Image Capabilities':
 			# Code for Image Generator
 			st.subheader(f":green[{st.session_state.option}]")
 			images_features()
