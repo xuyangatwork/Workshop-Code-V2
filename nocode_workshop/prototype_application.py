@@ -144,28 +144,38 @@ def my_first_app(bot_name):
 		form_output = prompt_template(results)
 		basic_bot(form_output , bot_name)
 
+def clear_session_states():
+	st.session_state.msg = []
+	if "memory" not in st.session_state:
+		pass
+	else:
+		del st.session_state["memory"]
+
 def my_first_app_advance(bot_name):
 	init_settings()
 	st.subheader("Protyping a chatbot")
 	with st.expander("Prototype Settings"):
 		st.write("Current Prompt Template: ", st.session_state.my_app_template_advance)
+	if st.toggle("Clear Chat"):
+		clear_session_states()
 	prototype_advance_bot(bot_name)
 
 def prototype_settings():
-	tab1, tab2, tab3, tab4 = st.tabs(["Prototype Input Settings", "Template settings", "Prototype Chatbot Settings", "KB settings"])
+	init_settings()
+	tab1, tab2, tab3, tab4 = st.tabs(["Form Prompt Settings", "Chatbot Prompt Settings", "Chatbot Parameter Settings", "KB settings"])
 
 	with tab1:
-		st.subheader("Basic Prototype Chatbot template Settings")
+		st.subheader("Form Prompt Settings")
 		form_settings()
 		prompt_template_settings()
 
 	with tab2:
-		st.subheader("Advance Prototype Chatbot Template settings")
+		st.subheader("Chatbot Prompt Settings")
 		advance_prompt_template_settings()
 		
 		
 	with tab3:
-		st.subheader("Prototype Chatbot Settings")
+		st.subheader("Chatbot Parameter Settings")
 		chatbot_settings()
 
 	with tab4:

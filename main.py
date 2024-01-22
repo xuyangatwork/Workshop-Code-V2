@@ -301,8 +301,8 @@ def main():
 
 					sac.MenuItem('GenAI Features & Apps', icon='book', children=[
 						sac.MenuItem(return_function_name('AI Analytics'), icon='graph-up', disabled=is_function_disabled('AI Analytics')),
-						sac.MenuItem(return_function_name('Image Generator','Image Analyser and Generator'), icon='camera', disabled=is_function_disabled('Image Generator')),
-						sac.MenuItem(return_function_name('Voice','Voice Analyser and Generator'), icon='mic',disabled=is_function_disabled('Voice')),
+						sac.MenuItem(return_function_name('Image', 'Image Capbilities'), icon='camera', disabled=is_function_disabled('Image')),
+						sac.MenuItem(return_function_name('Voice','Voice Capbilities'), icon='mic',disabled=is_function_disabled('Voice')),
 					]),	
 					#=================remove for coding exercises=================#
 					# sac.MenuItem('Coding Exercises', icon='person-fill-gear', children=[
@@ -470,7 +470,7 @@ def main():
 			st.subheader(f":green[{st.session_state.option}]")
 			pandas_ai(st.session_state.user['id'], st.session_state.user['school_id'], st.session_state.user['profile_id'])
 			pass
-		elif st.session_state.option == 'Image Analyser and Generator':
+		elif st.session_state.option == 'Image Capbilities':
 			# Code for Image Generator
 			st.subheader(f":green[{st.session_state.option}]")
 			images_features()
@@ -478,7 +478,7 @@ def main():
 			# st.divider()
 			# analyse_image()
 			pass
-		elif st.session_state.option == 'Voice Analyser and Generator':
+		elif st.session_state.option == 'Voice Capabilities':
 			st.subheader(f":green[{st.session_state.option}]")
 			# Code for Voice
 			voice_features()
@@ -803,11 +803,14 @@ def main():
 		elif st.session_state.option == 'Prototype Application':
 			# Code for Prototype Application - Zerocode
 			st.subheader(f":green[{st.session_state.option}]")
-			on = st.toggle('Advance Chatbot')
-			if on:
-				my_first_app_advance(PROTOTYPE)
-			else:
+			options = sac.chip(items=[
+								sac.ChipItem(label='Form prototype', icon='card-text'),
+								sac.ChipItem(label='Chatbot prototype', icon='chat'),
+							], format_func='title', radius='sm', size='sm', align='left', variant='light')
+			if options == 'Form prototype':
 				my_first_app(PROTOTYPE)
+			else:
+				my_first_app_advance(PROTOTYPE)
 			pass
 		elif st.session_state.option == 'Prototype Settings':
 			# Code for Prototype Settings - Zerocode
