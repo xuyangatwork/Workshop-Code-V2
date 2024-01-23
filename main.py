@@ -136,6 +136,7 @@ MINDMAP = config_handler.get_value('constants', 'MINDMAP')
 METACOG = config_handler.get_value('constants', 'METACOG')
 ACK = config_handler.get_value('application_agreement', 'ACK')
 PROTOTYPE = config_handler.get_value('constants', 'PROTOTYPE')
+SEARCH = config_handler.get_value('constants', 'SEARCH')
 
 
 
@@ -675,17 +676,16 @@ def main():
 				st.session_state.download_response_flag = "Capture Responses" in options
 				preview_download_response = "Download Responses" in options
 
-				clear = sac.switch(
-					label="Clear Chat", value=False, align="start", position="left"
-				)
-				if clear == True:
-					clear_session_states()
+				
 				if preview_download_response:
 					complete_my_lesson()
 
+			if st.button("Clear Chat"):
+					clear_session_states()
+
 			if st.session_state.vs:  # chatbot with knowledge base
 				if raw_search == True:
-					search_bot()
+					search_bot(SEARCH)
 				else:
 					if st.session_state.memoryless:
 						# memoryless chatbot with knowledge base but no memory
@@ -761,12 +761,16 @@ def main():
 				group_rule_based()
 		elif st.session_state.option == 'Discussion Chatbot':
 			# Code for FAQ AI chatbot
+			if "extract_data" not in st.session_state:
+				st.session_state.extract_data = ""
 			if st.session_state.user['profile_id'] == SA:
 				with st.expander("Discussion Bot Settings"):
 					analyse_responses = st.toggle('Switch on to analyse responses')
 					if analyse_responses:
-						discussion_data = extract_and_combine_responses()
+						if st.button("Extract Responses"):
+							st.session_state.extract_data = extract_and_combine_responses()
 						st.session_state.analyse_discussion = True
+						st.write("Discussion Data: ", st.session_state.extract_data)
 					else:
 						st.session_state.analyse_discussion = False
 			
@@ -776,10 +780,13 @@ def main():
 					pass
 
 			if st.session_state.analyse_discussion:
-				st.write("Discussion Data: ", discussion_data)
-				prompt = st.session_state.extraction_prompt + "/n" + discussion_data + "/n" + "Please analyse the response and answer the questions below"
+				prompt = st.session_state.extraction_prompt + "/n" + st.session_state.extract_data  + "/n" + "Please analyse the response and answer the questions below"
 			else:		
 				prompt = st.session_state.discussion_bot
+			
+			if st.session_state.user['profile_id'] == SA:
+				if st.button("Generate Report"):
+					prompt = st.session_state.discussion_bot_report + "/n" + st.session_state.extract_data
 			discussion_bot("Discussion Bot", prompt)
 			pass
 		elif st.session_state.option == 'FAQ AI Chatbot':
@@ -843,16 +850,16 @@ def main():
 				st.session_state.rating = 'Rating Function' in options
 				st.session_state.download_response_flag = 'Capture Responses' in options
 				preview_download_response = 'Download Responses' in options
-
-				clear = sac.switch(label='Clear Chat', value=False, align='start', position='left')
-				if clear == True:
-					clear_session_states()
+				
 				if preview_download_response:
 					complete_my_lesson()
 
+			if st.button("Clear Chat"):
+					clear_session_states()
+
 			if st.session_state.vs:#chatbot with knowledge base
 				if raw_search == True:
-					search_bot()
+					search_bot(SEARCH)
 				else:
 					if st.session_state.memoryless: #memoryless chatbot with knowledge base but no memory
 						basebot_qa(LESSON_BOT)

@@ -156,7 +156,7 @@ def my_first_app_advance(bot_name):
 	st.subheader("Protyping a chatbot")
 	with st.expander("Prototype Settings"):
 		st.write("Current Prompt Template: ", st.session_state.my_app_template_advance)
-	if st.toggle("Clear Chat"):
+	if st.button("Clear Chat"):
 		clear_session_states()
 	prototype_advance_bot(bot_name)
 

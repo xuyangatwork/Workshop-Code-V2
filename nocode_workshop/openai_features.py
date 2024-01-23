@@ -35,8 +35,7 @@ def encode_image(image_path):
 def get_file_extension(file_name):
 	return os.path.splitext(file_name)[-1]
 
-if "voice_image_file_exist" not in st.session_state:
-	st.session_state.voice_image_file_exist = None
+
 
 def clear_session_states():
 	st.session_state.msg = []
@@ -65,9 +64,15 @@ def images_features():
 					kb_syntax = generate_plantuml_mindmap(kb_prompt)
 					st.write(kb_syntax)
 					st.image(render_diagram(kb_syntax))
+
 	elif options == 'Image analyser with chat':
+		if "voice_image_file_exist" not in st.session_state:
+			st.session_state.voice_image_file_exist = None
 		st.subheader("Image analyser with chat")
-		if st.toggle("Clear chat"):
+		with st.expander("Image input"):
+			detect_file_upload()
+			pass
+		if st.button("Clear chat"):
 			clear_session_states()
 		visual_basebot_memory("VISUAL BOT")
 
@@ -182,22 +187,53 @@ def analyse_image():
 			# Clean up the temporary file
 			os.remove(temp_file_path)
 
+# def detect_file_upload():
+# 	uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+# 	img_file_buffer = st.camera_input("Take a picture")
+# 	if uploaded_file is not None or img_file_buffer is not None:
+# 		# Save the file to a temporary file
+# 		if img_file_buffer is not None:
+# 			uploaded_file = img_file_buffer
+# 		extension = get_file_extension(uploaded_file.name)
+# 		with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as temp_file:
+# 			temp_file.write(uploaded_file.getvalue())
+# 			temp_file_path = temp_file.name
+# 			st.session_state.voice_image_file_exist = temp_file_path
+# 			#st.write(st.session_state.voice_image_file_exist)
+# 			#return True
+
 def detect_file_upload():
-	uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
-	img_file_buffer = st.camera_input("Take a picture")
-	if uploaded_file is not None or img_file_buffer is not None:
-		# Save the file to a temporary file
+	
+	uploaded_file = None
+	file_uploaded = False  # Flag to indicate if the file is uploaded
+
+	# Toggle button to enable/disable camera input
+	if st.toggle('Enable Camera', key=4):
+		img_file_buffer = st.camera_input("Take a picture")
 		if img_file_buffer is not None:
 			uploaded_file = img_file_buffer
+	else:
+		uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+		if uploaded_file is not None:
+			file_uploaded = True  # Set the flag when a file is uploaded
+
+
+	if uploaded_file is not None:
+		if file_uploaded:
+			# Display the uploaded image
+			st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
+
+		# Save the file to a temporary file
 		extension = get_file_extension(uploaded_file.name)
 		with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as temp_file:
 			temp_file.write(uploaded_file.getvalue())
 			temp_file_path = temp_file.name
 			st.session_state.voice_image_file_exist = temp_file_path
-			st.write(st.session_state.voice_image_file_exist)
-			return temp_file_path
-	else:
-		return False
+			st.success("Image uploaded successfully")
+		st.info("Please enter a prompt to ask me how to analyse the image or click X to clear the image or upload")
+
+		
+
 
 def analyse_image_chat(temp_file_path, prompt):
 	# Encode the image
@@ -246,6 +282,186 @@ def analyse_image_chat(temp_file_path, prompt):
 		st.session_state.voice_image_file_exist = None
 		st.error("Failed to get response")
 		return False
+
+
+#below ------------------------------ base bot , K=2 memory for short term memory---------------------------------------------
+#faster and more precise but no summary
+def memory_buffer_component(prompt):
+	if st.session_state.vs:
+		docs = st.session_state.vs.similarity_search(prompt)
+		resource = docs[0].page_content
+		source = docs[0].metadata
+	# if "memory" not in st.session_state:
+	# 	st.session_state.memory = ConversationBufferWindowMemory(k=st.session_state.k_memory)
+	mem = st.session_state.memory.load_memory_variables({})
+	#st.write(resource)
+
+	if st.session_state.vs:
+	
+		prompt_template = st.session_state.chatbot + f"""
+							Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer. 
+							Search Result:
+							{resource}
+							{source}
+							History of conversation:
+							{mem}
+							You must quote the source of the Search Result if you are using the search result as part of the answer"""
+	else:
+		prompt_template = st.session_state.chatbot + f"""
+							History of conversation:
+							{mem}
+							"""
+	
+	return prompt_template
+
+
+#chat completion memory for streamlit using memory buffer
+def chat_completion_memory(prompt):
+	openai.api_key = return_api_key()
+	os.environ["OPENAI_API_KEY"] = return_api_key()	
+	prompt_template = memory_buffer_component(prompt)
+	#st.write("Prompt Template ", prompt_template)
+	response = client.chat.completions.create(
+		model=st.session_state.openai_model,
+		messages=[
+			{"role": "system", "content":prompt_template },
+			{"role": "user", "content": prompt},
+		],
+		temperature=st.session_state.temp, #settings option
+		presence_penalty=st.session_state.presence_penalty, #settings option
+		frequency_penalty=st.session_state.frequency_penalty, #settings option
+		stream=True #settings option
+	)
+	return response
+
+
+
+
+#integration API call into streamlit chat components with memory
+def visual_basebot_memory(bot_name):
+	full_response = ""
+	greetings_str = f"Hi, I am {bot_name}"
+	help_str = "How can I help you today?"
+	file_upload_str = "We noticed that you have uploaded an image, would you like to analyse it?"
+	analyse_image_str = "Please enter a prompt to ask me how to analyse the image or click X to clear the image or upload"
+	if "memory" not in st.session_state:
+		st.session_state.memory = ConversationBufferWindowMemory(k=st.session_state.k_memory)
+	# Check if st.session_state.msg exists, and if not, initialize with greeting and help messages
+	if 'msg' not in st.session_state:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	elif st.session_state.msg == []:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	
+	
+	for message in st.session_state.msg:
+		with st.chat_message(message["role"]):
+			st.markdown(message["content"])
+	
+	try:
+		if st.session_state.voice_image_file_exist != None:
+			if os.path.exists(st.session_state.voice_image_file_exist):
+			#st.image(st.session_state.voice_image_file_exist)
+			# if st.button("Cancel", key=3):
+			# 	os.remove(st.session_state.voice_image_file_exist)
+			# 	st.session_state.voice_image_file_exist = None
+			# 	st.rerun()
+				if prompt := st.chat_input("Please analyse this image and...", key=1):
+					with st.spinner("Analysing image..."):
+						response = analyse_image_chat(st.session_state.voice_image_file_exist, prompt)
+					st.session_state.msg.append({"role": "user", "content": prompt})
+					with st.chat_message("user"):
+						st.markdown(prompt)
+					with st.chat_message("assistant"):
+						message_placeholder = st.empty()
+						message_placeholder.markdown(response)
+						st.session_state.msg.append({"role": "assistant", "content": response})
+						st.session_state["memory"].save_context({"input": prompt},{"output": response})
+			else:
+				st.session_state.voice_image_file_exist = None
+				st.rerun()
+		elif prompt := st.chat_input("What is up?", key=2):
+			st.session_state.msg.append({"role": "user", "content": prompt})
+			with st.chat_message("user"):
+				st.markdown(prompt)
+
+			with st.chat_message("assistant"):
+				message_placeholder = st.empty()
+				full_response = ""
+				for response in chat_completion_memory(prompt):
+					full_response += (response.choices[0].delta.content or "")
+					message_placeholder.markdown(full_response + "▌")
+				message_placeholder.markdown(full_response)
+		
+			st.session_state.msg.append({"role": "assistant", "content": full_response})
+			st.session_state["memory"].save_context({"input": prompt},{"output": full_response})
+			
+	except Exception as e:
+		st.error(e)
+
+
+#==== image generator ===================
+
+
+def generate_image():
+	st.subheader("Generate an image")
+	i_prompt = st.text_input("Enter a prompt", value="Generate a photo of a")
+	if st.button("Generate"):
+		if i_prompt is not None or i_prompt != "Generate a photo of a":
+			response = client.images.generate(
+			model="dall-e-3",
+			prompt=i_prompt,
+			size="1024x1024",
+			quality="standard",
+			n=1,
+			)
+
+			image_url = response.data[0].url
+			st.image(image_url)
+		else:
+			st.write("Please enter a prompt")
+
+#=======voice================
+def text_speech(input_text):
+	# Create a temporary file within the 'audio_files' directory
+	temp_file = tempfile.NamedTemporaryFile(delete=False, dir=AUDIO_DIRECTORY, suffix='.mp3')
+	
+	# Generate speech
+	response = client.audio.speech.create(
+		model="tts-1",
+		voice="alloy",
+		input=input_text
+	)
+
+	# Write the response content to the temporary file
+	with open(temp_file.name, 'wb') as file:
+		file.write(response.content)
+
+	# Return the path of the temporary file
+	return temp_file.name
+
+
+def text_to_speech():
+	st.subheader("Text to Speech")
+	if 'audio_file_path' not in st.session_state:
+		st.session_state.audio_file_path = None
+
+	user_input = st.text_area("Enter your text here:")
+
+	if user_input and st.button("Generate Speech from Text"):
+		st.session_state.audio_file_path = text_speech(user_input)
+		st.audio(st.session_state.audio_file_path)
+
+	if st.session_state.audio_file_path and st.button("Reset"):
+		# Remove the temporary file
+		os.remove(st.session_state.audio_file_path)
+		st.session_state.audio_file_path = None
+		st.experimental_rerun()
 
 def transcribe_audio(file_path):
 	with open(file_path, "rb") as audio_file:
@@ -303,6 +519,9 @@ def record_myself():
 			os.remove(tmpfile.name)  # Delete the temporary file manually after processing
 			st.write(transcription_result)
 			return transcription_result
+		
+
+
 	# elif st.button("Translation (Maximum: 30 Seconds)") and wav_audio_data is not None:
 	# 	memory_file = io.BytesIO(wav_audio_data)
 	# 	memory_file.name = "recorded_audio.wav"
@@ -316,214 +535,63 @@ def record_myself():
 	# 		st.write(transcription_result)
 	# 		return transcription_result
 
-def generate_image():
-	st.subheader("Generate an image")
-	i_prompt = st.text_input("Enter a prompt", value="Generate a photo of a")
-	if st.button("Generate"):
-		if i_prompt is not None or i_prompt != "Generate a photo of a":
-			response = client.images.generate(
-			model="dall-e-3",
-			prompt=i_prompt,
-			size="1024x1024",
-			quality="standard",
-			n=1,
-			)
+# def call_agent(phone):
+# 	# Headers
+# 	headers = {
+# 	'Authorization': st.secrets["bland_key"],
+# 	}
 
-			image_url = response.data[0].url
-			st.image(image_url)
-		else:
-			st.write("Please enter a prompt")
+# 	# Data
+# 	data = {
+# 	'phone_number': phone,
+# 	'task': """Call Flow:
 
+# 		Introduce yourself as Mr Joe Tay and say you are calling from the YIJC Geography Department.
 
-def text_speech(input_text):
-	# Create a temporary file within the 'audio_files' directory
-	temp_file = tempfile.NamedTemporaryFile(delete=False, dir=AUDIO_DIRECTORY, suffix='.mp3')
-	
-	# Generate speech
-	response = client.audio.speech.create(
-		model="tts-1",
-		voice="alloy",
-		input=input_text
-	)
+# 		Verify you are speaking with the parent or guardian of the student and mention the student's name.
 
-	# Write the response content to the temporary file
-	with open(temp_file.name, 'wb') as file:
-		file.write(response.content)
+# 		Explain the upcoming changes in the examination format for the geography paper, highlighting the new practical component.
 
-	# Return the path of the temporary file
-	return temp_file.name
+# 		Inform them about the project work that the students are required to complete.
 
+# 		Ask if they have any questions or concerns regarding these changes and offer to provide additional information or resources.
 
-def text_to_speech():
-	st.subheader("Text to Speech")
-	if 'audio_file_path' not in st.session_state:
-		st.session_state.audio_file_path = None
+# 		Thank the parent or guardian for their time and provide contact information for further inquiries.
 
-	user_input = st.text_area("Enter your text here:")
+# 		Example Dialogue:
 
-	if user_input and st.button("Generate Speech from Text"):
-		st.session_state.audio_file_path = text_speech(user_input)
-		st.audio(st.session_state.audio_file_path)
+# 		R: Hello, this is Mr. Joe Tay calling from YIJC Geography Department. May I speak with the parent or guardian of Samantha Tan, please?
 
-	if st.session_state.audio_file_path and st.button("Reset"):
-		# Remove the temporary file
-		os.remove(st.session_state.audio_file_path)
-		st.session_state.audio_file_path = None
-		st.experimental_rerun()
+# 		P: Yes, this is her mother speaking.
 
+# 		R: Great, thank you for taking my call. I wanted to discuss some important updates regarding the geography paper that Samantha will be taking this semester. We're introducing a practical component to the examination, which will account for 20% of the final grade.
 
+# 		P: Oh, I see. What does that involve?
 
-#below ------------------------------ base bot , K=2 memory for short term memory---------------------------------------------
-#faster and more precise but no summary
-def memory_buffer_component():
-	if "memory" not in st.session_state:
-		st.session_state.memory = ConversationBufferWindowMemory(k=st.session_state.k_memory)
-	#st.write("Messages ", messages)
-	mem = st.session_state.memory.load_memory_variables({})
-	#For more customisation, this can be in the config.ini file
-	prompt_template = st.session_state.chatbot + f""" 
-						History of conversation:
-						{mem}"""
-				
-	return prompt_template
+# 		R: Students will be asked to conduct a small field study and present their findings. We believe this hands-on experience will greatly benefit their understanding of geographic research methods. In addition to this, there is also a project component that the students will need to complete in groups.
 
+# 		P: That sounds interesting. What kind of support will they receive for the project?
 
-#chat completion memory for streamlit using memory buffer
-def chat_completion_memory(prompt):
-	openai.api_key = return_api_key()
-	os.environ["OPENAI_API_KEY"] = return_api_key()	
-	prompt_template = memory_buffer_component()
-	#st.write("Prompt Template ", prompt_template)
-	response = client.chat.completions.create(
-		model=st.session_state.openai_model,
-		messages=[
-			{"role": "system", "content":prompt_template },
-			{"role": "user", "content": prompt},
-		],
-		temperature=st.session_state.temp, #settings option
-		presence_penalty=st.session_state.presence_penalty, #settings option
-		frequency_penalty=st.session_state.frequency_penalty, #settings option
-		stream=True #settings option
-	)
-	return response
+# 		R: Teachers will be providing guidance throughout the term, and we'll have a few dedicated sessions to discuss project ideas and execution. We're also providing extra materials on our online platform.
 
-#integration API call into streamlit chat components with memory
-def visual_basebot_memory(bot_name):
-	full_response = ""
-	greetings_str = f"Hi, I am {bot_name}"
-	help_str = "How can I help you today?"
-	# Check if st.session_state.msg exists, and if not, initialize with greeting and help messages
-	if 'msg' not in st.session_state:
-		st.session_state.msg = [
-			{"role": "assistant", "content": greetings_str},
-			{"role": "assistant", "content": help_str}
-		]
-	elif st.session_state.msg == []:
-		st.session_state.msg = [
-			{"role": "assistant", "content": greetings_str},
-			{"role": "assistant", "content": help_str}
-		]
-	left_col, right_col = st.columns(2)
-	with left_col:
-		
-		for message in st.session_state.msg:
-			with st.chat_message(message["role"]):
-				st.markdown(message["content"])
-	
-	with right_col:
-		detect_file_upload()
-		#st.write(file_upload)
-	try:
-		if st.session_state.voice_image_file_exist != None:
-			if prompt := st.chat_input("What is up?", key=1):
-				with st.spinner("Analysing image..."):
-					response = analyse_image_chat(st.session_state.voice_image_file_exist, prompt)
-				st.session_state.msg.append({"role": "user", "content": prompt})
-				with st.chat_message("user"):
-					st.markdown(prompt)
-				with st.chat_message("assistant"):
-					message_placeholder = st.empty()
-					message_placeholder.markdown(response)
-					st.session_state.msg.append({"role": "assistant", "content": response})
-					st.session_state["memory"].save_context({"input": prompt},{"output": response})	
-					st.session_state.voice_image_file_exist = None
+# 		P: Thank you for letting me know. I'll discuss this with Samantha tonight.
 
-		elif prompt := st.chat_input("What is up?", key=2):
-			st.session_state.msg.append({"role": "user", "content": prompt})
-			with st.chat_message("user"):
-				st.markdown(prompt)
+# 		R: You're welcome. If you or Samantha have any questions, please feel free to contact me. I'm here to help. Here's my email and the school's phone number.
 
-			with st.chat_message("assistant"):
-				message_placeholder = st.empty()
-				full_response = ""
-				for response in chat_completion_memory(prompt):
-					full_response += (response.choices[0].delta.content or "")
-					message_placeholder.markdown(full_response + "▌")
-				message_placeholder.markdown(full_response)
-		
-			st.session_state.msg.append({"role": "assistant", "content": full_response})
-			st.session_state["memory"].save_context({"input": prompt},{"output": full_response})
-			
-	except Exception as e:
-		st.error(e)
+# 		P: Got it. Thanks for the call.
 
-def call_agent(phone):
-	# Headers
-	headers = {
-	'Authorization': st.secrets["bland_key"],
-	}
+# 		R: My pleasure. Have a wonderful day!
 
-	# Data
-	data = {
-	'phone_number': phone,
-	'task': """Call Flow:
+# 		This dialogue maintains the structure of providing important information and seeking confirmation while adapting the content to the educational context.""",
+# 		'voice_id': 2,
+# 		'reduce_latency': True,
+# 		'request_data': {},
+# 		'voice_settings':{
+# 			speed: 1
+# 		},
+# 		'interruption_threshold': null
+# 		}
 
-		Introduce yourself as Mr Joe Tay and say you are calling from the YIJC Geography Department.
-
-		Verify you are speaking with the parent or guardian of the student and mention the student's name.
-
-		Explain the upcoming changes in the examination format for the geography paper, highlighting the new practical component.
-
-		Inform them about the project work that the students are required to complete.
-
-		Ask if they have any questions or concerns regarding these changes and offer to provide additional information or resources.
-
-		Thank the parent or guardian for their time and provide contact information for further inquiries.
-
-		Example Dialogue:
-
-		R: Hello, this is Mr. Joe Tay calling from YIJC Geography Department. May I speak with the parent or guardian of Samantha Tan, please?
-
-		P: Yes, this is her mother speaking.
-
-		R: Great, thank you for taking my call. I wanted to discuss some important updates regarding the geography paper that Samantha will be taking this semester. We're introducing a practical component to the examination, which will account for 20% of the final grade.
-
-		P: Oh, I see. What does that involve?
-
-		R: Students will be asked to conduct a small field study and present their findings. We believe this hands-on experience will greatly benefit their understanding of geographic research methods. In addition to this, there is also a project component that the students will need to complete in groups.
-
-		P: That sounds interesting. What kind of support will they receive for the project?
-
-		R: Teachers will be providing guidance throughout the term, and we'll have a few dedicated sessions to discuss project ideas and execution. We're also providing extra materials on our online platform.
-
-		P: Thank you for letting me know. I'll discuss this with Samantha tonight.
-
-		R: You're welcome. If you or Samantha have any questions, please feel free to contact me. I'm here to help. Here's my email and the school's phone number.
-
-		P: Got it. Thanks for the call.
-
-		R: My pleasure. Have a wonderful day!
-
-		This dialogue maintains the structure of providing important information and seeking confirmation while adapting the content to the educational context.""",
-		'voice_id': 2,
-		'reduce_latency': True,
-		'request_data': {},
-		'voice_settings':{
-			speed: 1
-		},
-		'interruption_threshold': null
-		}
-
-		# API request 
-	requests.post('https://api.bland.ai/call', json=data, headers=headers)
+# 		# API request 
+# 	requests.post('https://api.bland.ai/call', json=data, headers=headers)
 			

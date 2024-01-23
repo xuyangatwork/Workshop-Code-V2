@@ -58,7 +58,7 @@ def extract_and_combine_responses():
 
 		return combined_responses
 	except sqlite3.Error as e:
-		print(f"An error occurred: {e}")
+		st.write(f"An error occurred: {e}")
 		return ""
 	finally:
 		# Close the database connection
@@ -138,7 +138,7 @@ def chat_completion_qa_memory(prompt, prompt_design):
 #integration API call into streamlit chat components with memory and qa
 
 def discussion_bot(bot_name, prompt_design):
-	if st.toggle("Clear Chat"):
+	if st.button("Clear Chat"):
 		clear_session_states()
 	full_response = ""
 	greetings_str = f"Hi, I am {bot_name}"

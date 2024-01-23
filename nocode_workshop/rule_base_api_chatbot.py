@@ -226,7 +226,7 @@ def group_rule_based():
 
 		conn.close()
 	
-	if st.toggle("Clear Chat"):
+	if st.button("Clear Chat"):
 		clear_session_states()
 
 	st.divider()

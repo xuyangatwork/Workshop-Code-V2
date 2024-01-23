@@ -520,7 +520,7 @@ def return_search_raw_results(prompt):
 
 		return f"""{ans} \n\n Source: ({source})"""
 
-def search_bot():
+def search_bot(bot_name):
 	full_response = ""
 	for message in st.session_state.msg:
 		with st.chat_message(message["role"]):
@@ -546,7 +546,7 @@ def search_bot():
 			now = datetime.now() # Using ISO format for date
 			num_tokens = len(full_response + prompt)*1.3
 			#st.write(num_tokens)
-			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  full_response, prompt, num_tokens)
+			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  full_response, prompt, num_tokens, bot_name)
 			# if st.session_state.visuals == True:
 			# 	metacognitive_prompter(full_response)
 		if st.session_state.download_response_flag == True:
