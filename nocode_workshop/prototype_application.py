@@ -73,19 +73,23 @@ def form_input():
 
 def form_settings():
 
-	title = st.text_input("Form Title", value=st.session_state.form_title)
-	question_1 = st.text_input("Question 1:", value=st.session_state.question_1, key="question_1")
-	question_2 = st.text_input("Question 2:", value=st.session_state.question_2, key="question_2")
-	question_3 = st.text_input("Question 3:", value=st.session_state.question_3, key="question_3")
-	question_4 = st.text_input("Question 4:", value=st.session_state.question_4, key="question_4")
-	question_5 = st.text_input("Question 5:", value=st.session_state.question_5, key="question_5")
-	if st.button("Update Questions"):
-		st.session_state.form_title = title
-		st.session_state.question_1 = question_1
-		st.session_state.question_2 = question_2
-		st.session_state.question_3 = question_3
-		st.session_state.question_4 = question_4
-		st.session_state.question_5 = question_5
+	with st.form("form_settings"):
+
+		title = st.text_input("Form Title", value=st.session_state.form_title)
+		question_1 = st.text_input("Question 1:", value=st.session_state.question_1, key="question_1")
+		question_2 = st.text_input("Question 2:", value=st.session_state.question_2, key="question_2")
+		question_3 = st.text_input("Question 3:", value=st.session_state.question_3, key="question_3")
+		question_4 = st.text_input("Question 4:", value=st.session_state.question_4, key="question_4")
+		question_5 = st.text_input("Question 5:", value=st.session_state.question_5, key="question_5")
+		# Every form must have a submit button.
+		submitted = st.form_submit_button("Update Questions")
+		if submitted:
+			st.session_state.form_title = title
+			st.session_state.question_1 = question_1
+			st.session_state.question_2 = question_2
+			st.session_state.question_3 = question_3
+			st.session_state.question_4 = question_4
+			st.session_state.question_5 = question_5
 
 def chatbot_settings():
 	temp = st.number_input("Temperature", value=st.session_state.temp, min_value=0.0, max_value=1.0, step=0.1)
