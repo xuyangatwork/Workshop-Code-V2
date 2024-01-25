@@ -22,6 +22,7 @@ FEEDBACK_PLAN = config['constants']['FEEDBACK_PLAN']
 PERSONAL_PROMPT = config['constants']['PERSONAL_PROMPT']
 DEFAULT_TEXT = config['constants']['DEFAULT_TEXT']
 
+
 # Create or check for the 'database' directory in the current working directory
 cwd = os.getcwd()
 WORKING_DIRECTORY = os.path.join(cwd, "database")
@@ -141,18 +142,18 @@ def discussion_bot(bot_name, prompt_design):
 	if st.button("Clear Chat"):
 		clear_session_states()
 	full_response = ""
-	greetings_str = f"Hi, I am {bot_name}"
-	help_str = "Welcome to the discussion bot, may I know your name?"
+	greetings_str = st.session_state.discussion_greetings
+	#st.write(greetings_str)
 	# Check if st.session_state.msg exists, and if not, initialize with greeting and help messages
 	if 'msg' not in st.session_state:
 		st.session_state.msg = [
-			{"role": "assistant", "content": greetings_str},
-			{"role": "assistant", "content": help_str}
+			
+			{"role": "assistant", "content": greetings_str}
 		]
 	elif st.session_state.msg == []:
 		st.session_state.msg = [
-			{"role": "assistant", "content": greetings_str},
-			{"role": "assistant", "content": help_str}
+			
+			{"role": "assistant", "content": greetings_str}
 		]
 	#lesson collaborator
 	for message in st.session_state.msg:

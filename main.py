@@ -137,6 +137,7 @@ METACOG = config_handler.get_value('constants', 'METACOG')
 ACK = config_handler.get_value('application_agreement', 'ACK')
 PROTOTYPE = config_handler.get_value('constants', 'PROTOTYPE')
 SEARCH = config_handler.get_value('constants', 'SEARCH')
+DISCUSSION = config_handler.get_value('constants', 'DISCUSSION')
 
 
 
@@ -787,7 +788,7 @@ def main():
 			if st.session_state.user['profile_id'] == SA:
 				if st.button("Generate Report"):
 					prompt = st.session_state.discussion_bot_report + "/n" + st.session_state.extract_data
-			discussion_bot("Discussion Bot", prompt)
+			discussion_bot(DISCUSSION, prompt)
 			pass
 		elif st.session_state.option == 'FAQ AI Chatbot':
 			if st.session_state.user['profile_id'] == SA:

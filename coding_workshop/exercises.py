@@ -315,14 +315,14 @@ def api_call_exercise():
 def call_api_challenge():
 	st.title("Api Call Challenge")
 	prompt_design = st.text_input("Enter your the prompt design for the API call:", value="You are a helpful assistant.")
-	prompt_query = st.text_input("Enter your prompt query:", value="Tell me about Singapore in the 1970s in 50 words.")
+	prompt_query = st.text_input("Enter your user input:", value="Tell me about Singapore in the 1970s in 50 words.")
 	if st.button("Call the API"):
 		#modify the code below to create a function call_api to pass the prompt_design and prompt_query to call the OpenAI API
 		if prompt_design and prompt_query:
 			#call your api_call function here
 			st.write("Call the api_call function here")
 		else:
-			st.warning("Please enter a prompt design and prompt query.")
+			st.warning("Please enter a prompt design and user input.")
 #challenge 2 this function below is called by the call_api_challenge function
 def api_call(p_design, p_query):
 	openai.api_key = return_api_key()

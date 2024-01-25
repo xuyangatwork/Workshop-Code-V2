@@ -75,11 +75,11 @@ def prompt_designs_llm():
 	if options != 'COSTAR Prompt Framework':
 		st.subheader(options)
 		prompt_design = st.text_area("Enter your the prompt design for the API call:", value=selected_prompt_design, max_chars=4000, height=300)
-		prompt_query = st.text_area("Enter your prompt query:", value="I want to know about AI in 100 words", max_chars=4000, height=300)
+		prompt_query = st.text_area("Enter your user input:", value="I want to know about AI in 100 words", max_chars=4000, height=300)
 		select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere"])	
 		if st.button("Submit Prompt Design and Query to LLM"):
 			if prompt_design and prompt_query:
-				# Replace the placeholder with the actual prompt query
+				# Replace the placeholder with the actual user input
 				full_prompt = prompt_design.format(user_input=prompt_query)
 
 				if select_model == "cohere":
@@ -87,7 +87,7 @@ def prompt_designs_llm():
 				else:
 					api_call(full_prompt, select_model)
 			else:
-				st.warning("Please enter a prompt design and prompt query.")
+				st.warning("Please enter a prompt design and user input.")
 	else:
 		st.subheader(options)
 		part1 = costar_prompt_framework()
@@ -98,10 +98,10 @@ def prompt_designs_llm():
 		else:
 			prompt_design = part1
 		select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere"])
-		prompt_query = st.text_area("Enter your prompt query:", value="I want to know about AI in 100 words.", max_chars=4000, height=300)	
+		prompt_query = st.text_area("Enter your user input:", value="I want to know about AI in 100 words.", max_chars=4000, height=300)	
 		if st.button("Submit Prompt Design and Query to LLM"):
 			if prompt_design and prompt_query:
-				# Replace the placeholder with the actual prompt query
+				# Replace the placeholder with the actual user input
 				full_prompt = prompt_design + "\n" + prompt_query
 				st.divider()
 				st.success("Prompt design for chatbot")
@@ -113,7 +113,7 @@ def prompt_designs_llm():
 				else:
 					api_call(full_prompt, select_model)
 			else:
-				st.warning("Please enter a prompt design and prompt query.")
+				st.warning("Please enter a prompt design and user input.")
 		
 
 def costar_prompt_framework():

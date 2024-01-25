@@ -16,8 +16,8 @@ import configparser
 import ast
 
 client = OpenAI(
-    # defaults to os.environ.get("OPENAI_API_KEY")
-    api_key=return_api_key(),
+	# defaults to os.environ.get("OPENAI_API_KEY")
+	api_key=return_api_key(),
 )
 
 class ConfigHandler:
@@ -40,6 +40,7 @@ MY_FORM = config_handler.get_config_values('Prompt_Design_Templates', 'MY_FORM')
 MY_APP_ADVANCE = config_handler.get_config_values('Prompt_Design_Templates', 'MY_APP_ADVANCE')
 
 def init_settings():
+	# Initialize original session state variables if they don't exist
 	if "form_title" not in st.session_state:
 		st.session_state.form_title = "Message Generator"
 	if "question_1" not in st.session_state:
@@ -53,16 +54,25 @@ def init_settings():
 	if "question_5" not in st.session_state:
 		st.session_state.question_5 = "Number of words"
 
+def default_settings():
+	st.session_state.form_title = "Message Generator"
+	st.session_state.question_1 = "Name"
+	st.session_state.question_2 = "Occupation"
+	st.session_state.question_3 = "Subject"
+	st.session_state.question_4 = "Message"
+	st.session_state.question_5 = "Number of words"
+
+
 
 def form_input():
 		
 	with st.form("my_form"):
 		st.subheader(st.session_state.form_title)
-		q1 = st.text_input(f"Question 1: {st.session_state.question_1}",key="q_1")
-		q2 = st.text_input(f"Question 2: {st.session_state.question_2}",key="q_2")
-		q3 = st.text_input(f"Question 3: {st.session_state.question_3}",key="q_3")
-		q4 = st.text_input(f"Question 4: {st.session_state.question_4}",key="q_4")
-		q5 = st.text_input(f"Question 5: {st.session_state.question_5}",key="q_5")
+		q1 = st.text_input(f"Question 1: {st.session_state.question_1}")
+		q2 = st.text_input(f"Question 2: {st.session_state.question_2}")
+		q3 = st.text_input(f"Question 3: {st.session_state.question_3}")
+		q4 = st.text_input(f"Question 4: {st.session_state.question_4}")
+		q5 = st.text_input(f"Question 5: {st.session_state.question_5}")
 
 		# Every form must have a submit button.
 		submitted = st.form_submit_button("Submit")
@@ -71,25 +81,39 @@ def form_input():
 		
 	return False
 
+def update_session_state(title, question_1, question_2, question_3, question_4, question_5):
+	st.session_state.form_title = title
+	st.session_state.question_1 = question_1
+	st.session_state.question_2 = question_2
+	st.session_state.question_3 = question_3
+	st.session_state.question_4 = question_4
+	st.session_state.question_5 = question_5
+
+def set_session_state():
+	for i in range(1, 6):
+		st.write(st.session_state[f"question_{i}"])
+
+
+	 
 def form_settings():
-
+	if st.checkbox("Use default form settings", key = 0):
+		default_settings()
 	with st.form("form_settings"):
-
+		st.write("These are the current questions for the form, do not leave a blank (Enter NA for non applicable questions)")
 		title = st.text_input("Form Title", value=st.session_state.form_title)
-		question_1 = st.text_input("Question 1:", value=st.session_state.question_1, key="question_1")
-		question_2 = st.text_input("Question 2:", value=st.session_state.question_2, key="question_2")
-		question_3 = st.text_input("Question 3:", value=st.session_state.question_3, key="question_3")
-		question_4 = st.text_input("Question 4:", value=st.session_state.question_4, key="question_4")
-		question_5 = st.text_input("Question 5:", value=st.session_state.question_5, key="question_5")
-		# Every form must have a submit button.
+		question_1 = st.text_input("Question 1:", value=st.session_state.question_1)
+		question_2 = st.text_input("Question 2:", value=st.session_state.question_2)
+		question_3 = st.text_input("Question 3:", value=st.session_state.question_3)
+		question_4 = st.text_input("Question 4:", value=st.session_state.question_4)
+		question_5 = st.text_input("Question 5:", value=st.session_state.question_5)
+		
 		submitted = st.form_submit_button("Update Questions")
 		if submitted:
-			st.session_state.form_title = title
-			st.session_state.question_1 = question_1
-			st.session_state.question_2 = question_2
-			st.session_state.question_3 = question_3
-			st.session_state.question_4 = question_4
-			st.session_state.question_5 = question_5
+			if not all([title, question_1, question_2, question_3, question_4, question_5]):
+				st.error("Please fill in all fields or enter 'NA' if not applicable.")
+			else:
+				update_session_state(title, question_1, question_2, question_3, question_4, question_5)
+				st.success("Questions updated successfully!")
 
 def chatbot_settings():
 	temp = st.number_input("Temperature", value=st.session_state.temp, min_value=0.0, max_value=1.0, step=0.1)

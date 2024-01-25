@@ -37,7 +37,7 @@ def clear_session_states():
 def call_api():
 	st.subheader("Calling the LLM API")
 	prompt_design = st.text_input("Enter your the prompt design for the API call:", value="You are a helpful assistant.")
-	prompt_query = st.text_input("Enter your prompt query:", value="Tell me about Singapore in the 1970s in 50 words.")
+	prompt_query = st.text_input("Enter your user input:", value="Tell me about Singapore in the 1970s in 50 words.")
 	select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere"])	
 	if st.button("Call the API"):
 		if prompt_design and prompt_query:
@@ -46,7 +46,7 @@ def call_api():
 			else:
 				api_call(prompt_design, prompt_query, select_model)
 		else:
-			st.warning("Please enter a prompt design and prompt query.")
+			st.warning("Please enter a prompt design and user input.")
 
 def call_cohere_api(prompt_design, prompt_query):
     # Initialize the Cohere client
