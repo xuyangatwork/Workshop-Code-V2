@@ -6,6 +6,7 @@ from basecode.authenticate import return_api_key
 import configparser
 import os
 import pandas as pd
+import cohere
 
 client = OpenAI(
 	# defaults to os.environ.get("OPENAI_API_KEY")
@@ -105,7 +106,12 @@ def faq_bot():
 
 	st.divider()
 	st.subheader("FAQ Chatbot with AI")
-	basebot("FAQ Bot", chatbot_selection)
+	if st.toggle("Use Cohere"):
+		st.write("Using Cohere Model")
+		cohere_bot("FAQ Bot", chatbot_selection)
+	else:
+		st.write("Using OpenAI Model GPT-3.5 Turbo")
+		basebot("FAQ Bot", chatbot_selection)
 	
 
 	# Concatenate all records into a string
@@ -114,11 +120,11 @@ def faq_bot():
 #below ------------------------------ base bot , no memory ---------------------------------------------
 #chat completion for streamlit function
 def chat_completion(prompt, faq):
-	faq = "This is a list of frequently answered questions:\n" + faq
+	faq = "You are an FAQ BOT, these are the faq information given to you:" + faq + "You must use only the information given to you in the faq informatio to answer the user query, do not provide your own information\n This the user query: "
 	openai.api_key = return_api_key()
 	os.environ["OPENAI_API_KEY"] = return_api_key()
 	response = client.chat.completions.create(
-		model=st.session_state.openai_model,
+		model="gpt-3.5-turbo-1106",
 		messages=[
 			{"role": "system", "content":faq},
 			{"role": "user", "content": prompt},
@@ -167,3 +173,97 @@ def basebot(bot_name, chatbot_selection):
 				
 	except Exception as e:
 		st.error(e)
+
+# def cohere():
+
+# co = cohere.Client(st.secrets["cohere_key"])
+
+# with st.status("Calling the Cohere API..."):
+#     # Call the Cohere API
+#     response = co.generate(prompt=prompt_design + "\n" + prompt_query, max_tokens=1000)
+	
+#     # Check if the response has the expected structure
+#     if response and response.generations:
+#         # Extract the text of the first generation
+#         generation_text = response.generations[0].text
+
+#below ------------------------------ base bot , no memory ---------------------------------------------
+# #chat completion for streamlit function
+# def chat_completion(prompt, faq):
+# 	faq = "This is a list of frequently answered questions:\n" + faq
+# 	openai.api_key = return_api_key()
+# 	os.environ["OPENAI_API_KEY"] = return_api_key()
+# 	response = client.chat.completions.create(
+# 		model="gpt-3.5-turbo-1106",
+# 		messages=[
+# 			{"role": "system", "content":faq},
+# 			{"role": "user", "content": prompt},
+# 		],
+# 		temperature=st.session_state.temp, #settings option
+# 		stream=True #settings option
+# 	)
+# 	return response
+
+#integration API call into streamlit chat components
+def cohere_bot(bot_name, chatbot_selection):
+	full_response = ""
+	greetings_str = f"Hi, I am {bot_name}"
+	help_str = "How can I help you today?"
+	co = cohere.Client(st.secrets["cohere_key"])
+	# Check if st.session_state.msg exists, and if not, initialize with greeting and help messages
+	if 'msg' not in st.session_state:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	elif st.session_state.msg == []:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	for message in st.session_state.msg:
+		with st.chat_message(message["role"]):
+			st.markdown(message["content"])
+	try:
+		if prompt := st.chat_input("What is up?"):
+			faq = retrieve_faqs(chatbot_selection)
+
+			st.session_state.msg.append({"role": "user", "content": prompt})
+			with st.chat_message("user"):
+				st.markdown(prompt)
+
+			with st.chat_message("assistant"):
+				message_placeholder = st.empty()
+				full_response = ""
+				#response = 
+				#if response and response.generations:
+				#for response in co.chat(prompt=faq + "\n" + prompt, max_tokens=1000, stream = True):
+				response_stream = co.chat(message="You are an FAQ BOT, these are the faq information given to you:" + faq + "You must use only the information given to you in the faq informatio to answer the user query, do not provide your own information\n This the user query: " + prompt, max_tokens=1000, stream=True)
+    
+				for response_object in response_stream:
+				# Check if response_object has a 'text' attribute
+					if hasattr(response_object, 'text'):
+						# Append the text to full_response
+						full_response += response_object.text
+
+							# Update the placeholder with the current state of full_response
+					message_placeholder.markdown(full_response + "▌")
+
+				# Final update to the placeholder after streaming is complete
+				message_placeholder.markdown(full_response)
+						
+			st.session_state.msg.append({"role": "assistant", "content": full_response})
+				
+	except Exception as e:
+		st.error(e)
+
+
+
+	# with st.status("Calling the Cohere API..."):
+	#     # Call the Cohere API
+	#     response = co.generate(prompt=prompt_design + "\n" + prompt_query, max_tokens=1000)
+		
+		# Check if the response has the expected structure
+	#if response and response.generations:
+			# Extract the text of the first generation
+	#     generation_text = response.generations[0].text
