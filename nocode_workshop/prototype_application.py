@@ -13,6 +13,8 @@ from langchain.memory import ConversationSummaryBufferMemory
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chat_models import ChatOpenAI
 import configparser
+import cohere
+import google.generativeai as genai
 import ast
 
 client = OpenAI(
@@ -186,7 +188,12 @@ def my_first_app_advance(bot_name):
 		st.write("Current Prompt Template: ", st.session_state.my_app_template_advance)
 	if st.button("Clear Chat"):
 		clear_session_states()
-	prototype_advance_bot(bot_name)
+	if st.session_state.prototype_model == "gemini-pro":
+		prototype_gemini_bot(bot_name)
+	elif st.session_state.prototype_model == "cohere":
+		prototype_cohere_bot(bot_name)
+	else:
+		prototype_advance_bot(bot_name)
 
 def prototype_settings():
 	init_settings()
@@ -204,7 +211,15 @@ def prototype_settings():
 		
 	with tab3:
 		st.subheader("Chatbot Parameter Settings")
+		if "prototype_model" not in st.session_state:
+			st.session_state.prototype_model = "gpt-3.5-turbo"
+		
+		st.write("Current Model: ",st.session_state.prototype_model)
+		model_settings = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere", "gemini-pro"])
+		if st.button("Update Model"):
+			st.session_state.prototype_model = model_settings
 		chatbot_settings()
+
 
 	with tab4:
 		st.subheader("KB settings")
@@ -214,7 +229,7 @@ def prototype_settings():
 
 
 
-#below ------------------------------ QA  base bot , K=2 memory for short term memory---------------------------------------------
+#below ========================================================= OPENAI BOT =========================================================
 #using the query from lanceDB and vector store , combine with memory
 def prompt_template_prototype(prompt):
 	#st.write(type(st.session_state.vs))
@@ -242,7 +257,7 @@ def chat_completion_prototype(prompt):
 	os.environ["OPENAI_API_KEY"] = return_api_key()
 	prompt_template = prompt_template_prototype(prompt)
 	response = client.chat.completions.create(
-		model=st.session_state.openai_model,
+		model=st.session_state.prototype_model,
 		messages=[
 			{"role": "system", "content":prompt_template },
 			{"role": "user", "content": prompt},
@@ -300,6 +315,174 @@ def prototype_advance_bot(bot_name= "Prototype"):
 			
 	except Exception as e:
 		st.exception(e)
+#==================================================== GEMINI PRO BOT =========================================================	
+def prompt_template_prototype(prompt):
+	#st.write(type(st.session_state.vs))
+	if st.session_state.vs:
+		docs = st.session_state.vs.similarity_search(prompt)
+		resource = docs[0].page_content
+		source = docs[0].metadata
+	else:
+		source = ""
+		resource = ""
+
+	if "memory" not in st.session_state:
+		st.session_state.memory = ConversationBufferWindowMemory(k=st.session_state.k_memory)
+	mem = st.session_state.memory.load_memory_variables({})
+
+	#st.write(resource)
+	prompt = advance_prompt_template(mem, source, resource)
+	
+	return prompt
+
+#integration API call into streamlit chat components with memory and qa
+
+def prototype_gemini_bot(bot_name= "Cohere Prototype"):
+	genai.configure(api_key = st.secrets["google_key"])
+	greetings_str = f"Hi, I am {bot_name}"
+	help_str = "How can I help you today?"
+	# Check if st.session_state.msg exists, and if not, initialize with greeting and help messages
+	if 'msg' not in st.session_state:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	elif st.session_state.msg == []:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	
+	for message in st.session_state.msg:
+		with st.chat_message(message["role"]):
+			st.markdown(message["content"])	
+	
+	try:
+		if prompt := st.chat_input("Enter your query"):
+			st.session_state.msg.append({"role": "user", "content": prompt})
+			with st.chat_message("user"):
+				st.markdown(prompt)
+
+			with st.chat_message("assistant"):
+				message_placeholder = st.empty()
+				full_response = ""
+				#response = 
+				chat_model = genai.GenerativeModel('gemini-pro')
+				response_stream = chat_model.generate_content(prompt, stream=True)
+				for response_object in response_stream:
+				# Check if response_object has a 'text' attribute
+					if hasattr(response_object, 'text'):
+						# Append the text to full_response
+						full_response += response_object.text
+
+							# Update the placeholder with the current state of full_response
+					message_placeholder.markdown(full_response + "▌")
+
+				# Final update to the placeholder after streaming is complete
+				message_placeholder.markdown(full_response)
+						
+			st.session_state.msg.append({"role": "assistant", "content": full_response})
+
+
+			st.session_state["memory"].save_context({"input": prompt},{"output": full_response})
+			 # Insert data into the table
+			now = datetime.now() # Using ISO format for date
+			num_tokens = len(full_response + prompt)*1.3
+			#st.write(num_tokens)
+			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  full_response, prompt, num_tokens, bot_name)
+			
+	except Exception as e:
+		st.exception(e)
+
+
+
+#below ========================================================= COHERE BOT =========================================================
+#using the query from lanceDB and vector store , combine with memory
+def prompt_template_prototype(prompt):
+	#st.write(type(st.session_state.vs))
+	if st.session_state.vs:
+		docs = st.session_state.vs.similarity_search(prompt)
+		resource = docs[0].page_content
+		source = docs[0].metadata
+	else:
+		source = ""
+		resource = ""
+
+	if "memory" not in st.session_state:
+		st.session_state.memory = ConversationBufferWindowMemory(k=st.session_state.k_memory)
+	mem = st.session_state.memory.load_memory_variables({})
+
+	#st.write(resource)
+	prompt = advance_prompt_template(mem, source, resource)
+	
+	return prompt
+
+
+
+#integration API call into streamlit chat components with memory and qa
+
+def prototype_cohere_bot(bot_name= "Cohere Prototype"):
+	co = cohere.Client(st.secrets["cohere_key"])
+	greetings_str = f"Hi, I am {bot_name}"
+	help_str = "How can I help you today?"
+	# Check if st.session_state.msg exists, and if not, initialize with greeting and help messages
+	if 'msg' not in st.session_state:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	elif st.session_state.msg == []:
+		st.session_state.msg = [
+			{"role": "assistant", "content": greetings_str},
+			{"role": "assistant", "content": help_str}
+		]
+	
+	for message in st.session_state.msg:
+		with st.chat_message(message["role"]):
+			st.markdown(message["content"])	
+	
+	try:
+		if prompt := st.chat_input("Enter your query"):
+			st.session_state.msg.append({"role": "user", "content": prompt})
+			with st.chat_message("user"):
+				st.markdown(prompt)
+
+			with st.chat_message("assistant"):
+				message_placeholder = st.empty()
+				full_response = ""
+				#response = 
+				#if response and response.generations:
+				#for response in co.chat(prompt=faq + "\n" + prompt, max_tokens=1000, stream = True):
+				response_stream = co.chat(message= prompt_template_prototype(prompt) + "\n This is the user query" + prompt, max_tokens=1000, stream=True)
+    
+				for response_object in response_stream:
+				# Check if response_object has a 'text' attribute
+					if hasattr(response_object, 'text'):
+						# Append the text to full_response
+						full_response += response_object.text
+
+							# Update the placeholder with the current state of full_response
+					message_placeholder.markdown(full_response + "▌")
+
+				# Final update to the placeholder after streaming is complete
+				message_placeholder.markdown(full_response)
+						
+			st.session_state.msg.append({"role": "assistant", "content": full_response})
+
+
+			st.session_state["memory"].save_context({"input": prompt},{"output": full_response})
+			 # Insert data into the table
+			now = datetime.now() # Using ISO format for date
+			num_tokens = len(full_response + prompt)*1.3
+			#st.write(num_tokens)
+			insert_into_data_table(now.strftime("%d/%m/%Y %H:%M:%S"),  full_response, prompt, num_tokens, bot_name)
+			
+	except Exception as e:
+		st.exception(e)
+
+
+
+#================================FORM TEMPLATE BOT===============================================================================
 
 #chat completion memory for streamlit using memory buffer
 def template_prompt(prompt, prompt_template):

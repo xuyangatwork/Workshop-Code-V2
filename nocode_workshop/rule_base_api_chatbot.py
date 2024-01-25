@@ -2,6 +2,7 @@ import openai
 from openai import OpenAI
 import streamlit as st
 from basecode.authenticate import return_api_key
+import google.generativeai as genai
 import os
 import pandas as pd
 import sqlite3
@@ -38,46 +39,65 @@ def call_api():
 	st.subheader("Calling the LLM API")
 	prompt_design = st.text_input("Enter your the prompt design for the API call:", value="You are a helpful assistant.")
 	prompt_query = st.text_input("Enter your user input:", value="Tell me about Singapore in the 1970s in 50 words.")
-	select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere"])	
+	select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere", "gemini-pro"])	
 	if st.button("Call the API"):
 		if prompt_design and prompt_query:
 			if select_model == "cohere":
 				call_cohere_api(prompt_design, prompt_query)
+			elif select_model == "gemini-pro":
+				call_google_api(prompt_design, prompt_query)
 			else:
 				api_call(prompt_design, prompt_query, select_model)
 		else:
 			st.warning("Please enter a prompt design and user input.")
 
+
+def call_google_api(prompt_design, prompt_query):
+	# Initialize the Cohere client
+	genai.configure(api_key = st.secrets["google_key"])
+
+	with st.status("Calling the Google API..."):
+		# Call the Cohere API
+		
+		chat_model = genai.GenerativeModel('gemini-pro')
+		response = chat_model.generate_content(prompt_design + prompt_query)
+		# Check if the response has the expected structure
+		
+		st.write(response.text)
+
+
+
+
 def call_cohere_api(prompt_design, prompt_query):
-    # Initialize the Cohere client
-    co = cohere.Client(st.secrets["cohere_key"])
+	# Initialize the Cohere client
+	co = cohere.Client(st.secrets["cohere_key"])
 
-    with st.status("Calling the Cohere API..."):
-        # Call the Cohere API
-        response = co.generate(prompt=prompt_design + "\n" + prompt_query, max_tokens=1000)
-        
-        # Check if the response has the expected structure
-        if response and response.generations:
-            # Extract the text of the first generation
-            generation_text = response.generations[0].text
+	with st.status("Calling the Cohere API..."):
+		# Call the Cohere API
+		response = co.generate(prompt=prompt_design + "\n" + prompt_query, max_tokens=1000)
+		
+		# Check if the response has the expected structure
+		if response and response.generations:
+			# Extract the text of the first generation
+			generation_text = response.generations[0].text
 
-            # Display the raw response (optional)
-            st.markdown("**This is the raw response:**")
-            st.write(response)
+			# Display the raw response (optional)
+			st.markdown("**This is the raw response:**")
+			st.write(response)
 
-            # Display the extracted response
-            st.markdown("**This is the extracted response:**")
-            st.write(generation_text)
+			# Display the extracted response
+			st.markdown("**This is the extracted response:**")
+			st.write(generation_text)
 
-            # Display token usage information
-            # Display token usage information
-            if 'meta' in response and 'billed_units' in response['meta']:
-                completion_tokens = response['meta']['billed_units']['output_tokens']
-                prompt_tokens = response['meta']['billed_units']['input_tokens']
-                st.write(f"Completion Tokens: {completion_tokens}")
-                st.write(f"Prompt Tokens: {prompt_tokens}")
-        else:
-            st.error("No response or unexpected response format received from the API.")
+			# Display token usage information
+			# Display token usage information
+			if 'meta' in response and 'billed_units' in response['meta']:
+				completion_tokens = response['meta']['billed_units']['output_tokens']
+				prompt_tokens = response['meta']['billed_units']['input_tokens']
+				st.write(f"Completion Tokens: {completion_tokens}")
+				st.write(f"Prompt Tokens: {prompt_tokens}")
+		else:
+			st.error("No response or unexpected response format received from the API.")
 
 def api_call(p_design, p_query, model):
 	openai.api_key = return_api_key()

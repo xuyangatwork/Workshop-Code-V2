@@ -1,9 +1,12 @@
 import streamlit as st
 from basecode.authenticate import return_api_key
+from basecode.users_module import vectorstore_selection_interface
 from langchain.memory import ConversationBufferWindowMemory
 from st_audiorec import st_audiorec
 import os
+import PIL
 import openai
+import google.generativeai as genai
 import requests
 import base64
 import tempfile
@@ -68,8 +71,13 @@ def images_features():
 	elif options == 'Image analyser with chat':
 		if "voice_image_file_exist" not in st.session_state:
 			st.session_state.voice_image_file_exist = None
+		if "vision_model" not in st.session_state:
+			st.session_state.vision_model = "gpt-vision"
 		st.subheader("Image analyser with chat")
 		with st.expander("Image input"):
+			vectorstore_selection_interface(st.session_state.user["id"])
+			if st.toggle("Gemini Vision"):
+				st.session_state.vision_model = "gemini-vision"
 			detect_file_upload()
 			pass
 		if st.button("Clear chat"):
@@ -232,7 +240,17 @@ def detect_file_upload():
 			st.success("Image uploaded successfully")
 		st.info("Please enter a prompt to ask me how to analyse the image or click X to clear the image or upload")
 
-		
+
+
+def analyse_image_chat_gemini(temp_file_path, prompt):
+	genai.configure(api_key = st.secrets["google_key"])
+	image = PIL.Image.open(temp_file_path)
+	vision_model = genai.GenerativeModel('gemini-pro-vision')
+	response = vision_model.generate_content([prompt,image])
+	if response:
+		os.remove(temp_file_path)
+		return response
+
 
 
 def analyse_image_chat(temp_file_path, prompt):
@@ -298,7 +316,7 @@ def memory_buffer_component(prompt):
 
 	if st.session_state.vs:
 	
-		prompt_template = st.session_state.chatbot + f"""
+		prompt_template = st.session_state.vision_chatbot + f"""
 							Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer. 
 							Search Result:
 							{resource}
@@ -307,7 +325,7 @@ def memory_buffer_component(prompt):
 							{mem}
 							You must quote the source of the Search Result if you are using the search result as part of the answer"""
 	else:
-		prompt_template = st.session_state.chatbot + f"""
+		prompt_template = st.session_state.vision_chatbot + f"""
 							History of conversation:
 							{mem}
 							"""
@@ -373,7 +391,10 @@ def visual_basebot_memory(bot_name):
 			# 	st.rerun()
 				if prompt := st.chat_input("Please analyse this image and...", key=1):
 					with st.spinner("Analysing image..."):
-						response = analyse_image_chat(st.session_state.voice_image_file_exist, prompt)
+						if st.session_state.vision_model == "gemini-vision":
+							response = analyse_image_chat_gemini(st.session_state.voice_image_file_exist, prompt).text
+						else:
+							response = analyse_image_chat(st.session_state.voice_image_file_exist, prompt)
 					st.session_state.msg.append({"role": "user", "content": prompt})
 					with st.chat_message("user"):
 						st.markdown(prompt)

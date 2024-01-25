@@ -8,6 +8,7 @@ import configparser
 import os
 import ast
 import cohere
+import google.generativeai as genai
 
 client = OpenAI(
 	# defaults to os.environ.get("OPENAI_API_KEY")
@@ -76,7 +77,7 @@ def prompt_designs_llm():
 		st.subheader(options)
 		prompt_design = st.text_area("Enter your the prompt design for the API call:", value=selected_prompt_design, max_chars=4000, height=300)
 		prompt_query = st.text_area("Enter your user input:", value="I want to know about AI in 100 words", max_chars=4000, height=300)
-		select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere"])	
+		select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere", "gemini-pro"])	
 		if st.button("Submit Prompt Design and Query to LLM"):
 			if prompt_design and prompt_query:
 				# Replace the placeholder with the actual user input
@@ -84,6 +85,8 @@ def prompt_designs_llm():
 
 				if select_model == "cohere":
 					call_cohere_api(full_prompt)
+				elif select_model == "gemini-pro":
+					call_google_api(full_prompt)
 				else:
 					api_call(full_prompt, select_model)
 			else:
@@ -97,7 +100,7 @@ def prompt_designs_llm():
 			prompt_design = part1 + part2
 		else:
 			prompt_design = part1
-		select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere"])
+		select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere", "gemini-pro"])
 		prompt_query = st.text_area("Enter your user input:", value="I want to know about AI in 100 words.", max_chars=4000, height=300)	
 		if st.button("Submit Prompt Design and Query to LLM"):
 			if prompt_design and prompt_query:
@@ -110,6 +113,8 @@ def prompt_designs_llm():
 				st.success("Prompt output")
 				if select_model == "cohere":
 					call_cohere_api(full_prompt)
+				elif select_model == "gemini-pro":
+					call_google_api(full_prompt)
 				else:
 					api_call(full_prompt, select_model)
 			else:
@@ -156,6 +161,19 @@ def chain_of_thought():
 					 f"Final Step: {final_step}")
 	
 	return output_string
+
+def call_google_api(full_prompt):
+	# Initialize the Cohere client
+	genai.configure(api_key = st.secrets["google_key"])
+
+	with st.status("Calling the Google API..."):
+		# Call the Cohere API
+		
+		chat_model = genai.GenerativeModel('gemini-pro')
+		response = chat_model.generate_content(full_prompt)
+		# Check if the response has the expected structure
+		
+		st.write(response.text)
 
 
 def call_cohere_api(full_prompt):
