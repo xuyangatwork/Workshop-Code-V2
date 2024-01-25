@@ -163,6 +163,8 @@ def form_template(source, resource):
 	return text.format(source=source, resource=resource)
 
 def my_first_app(bot_name):
+	if "prototype_model" not in st.session_state:
+		st.session_state.prototype_model = "gpt-3.5-turbo"
 	init_settings()
 	st.subheader("Protyping a chatbot")
 	with st.expander("Prototype Settings"):
@@ -183,6 +185,8 @@ def clear_session_states():
 
 def my_first_app_advance(bot_name):
 	init_settings()
+	if "prototype_model" not in st.session_state:
+		st.session_state.prototype_model = "gpt-3.5-turbo"
 	st.subheader("Protyping a chatbot")
 	with st.expander("Prototype Settings"):
 		st.write("Current Prompt Template: ", st.session_state.my_app_template_advance)
