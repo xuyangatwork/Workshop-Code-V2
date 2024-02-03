@@ -12,3 +12,4 @@ __pycache__/
 *.db
 moe/
 cache/
+.DS_Store
