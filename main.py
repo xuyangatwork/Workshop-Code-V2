@@ -72,6 +72,8 @@ import configparser
 import ast
 import ssl
 
+nltk.download('stopwords')
+              
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
