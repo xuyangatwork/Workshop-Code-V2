@@ -72,14 +72,6 @@ import configparser
 import ast
 import ssl
               
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
-#
-
 # try:
 #     _create_unverified_https_context = ssl._create_unverified_context
 # except AttributeError:
@@ -88,27 +80,8 @@ else:
 #     ssl._create_default_https_context = _create_unverified_https_context
 
 
-# Define the NLTK data directory
-nltk_data_dir = st.secrets["NLTK_DATA"]
 
-# Ensure the NLTK data directory exists
-if not os.path.exists(nltk_data_dir):
-    os.makedirs(nltk_data_dir, exist_ok=True)
 
-# Update the NLTK data path to include the custom directory
-nltk.data.path.append(nltk_data_dir)
-
-def download_nltk_data_if_absent(package_name):
-    try:
-        # Try loading the package to see if it exists in the custom directory
-        nltk.data.find("tokenizers/" + package_name)
-    except LookupError:
-        # If the package doesn't exist, download it to the specified directory
-        nltk.download(package_name, download_dir=nltk_data_dir)
-
-# Example usage
-download_nltk_data_if_absent('punkt')
-download_nltk_data_if_absent('stopwords')
 
 class ConfigHandler:
 	def __init__(self):
@@ -187,6 +160,28 @@ def main():
 
 		st.title(st.session_state.title_page)
 		sac.divider(label='Exploring Generative Artificial Intelligence - Author Joe Tay', icon='house')
+
+		# Define the NLTK data directory
+		nltk_data_dir = st.secrets["NLTK_DATA"]
+
+		# Ensure the NLTK data directory exists
+		if not os.path.exists(nltk_data_dir):
+			os.makedirs(nltk_data_dir, exist_ok=True)
+
+		# Update the NLTK data path to include the custom directory
+		nltk.data.path.append(nltk_data_dir)
+
+		def download_nltk_data_if_absent(package_name):
+			try:
+				# Try loading the package to see if it exists in the custom directory
+				nltk.data.find("tokenizers/" + package_name)
+			except LookupError:
+				# If the package doesn't exist, download it to the specified directory
+				nltk.download(package_name, download_dir=nltk_data_dir)
+
+		# Example usage
+		download_nltk_data_if_absent('punkt')
+		download_nltk_data_if_absent('stopwords')
 		
 		if "api_key" not in st.session_state:
 			st.session_state.api_key = ""
