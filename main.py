@@ -24,7 +24,7 @@ from nocode_workshop.k_map import map_creation_form
 from basecode.database_schema import create_dbs
 from nocode_workshop.tool_bots import basic_analysis_bot, rag_bot
 import pandas as pd
-
+import os
 from basecode.database_module import (
 	manage_tables, 
 	delete_tables, 
@@ -71,8 +71,6 @@ from PIL import Image
 import configparser
 import ast
 import ssl
-
-nltk.download('stopwords')
               
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -90,18 +88,27 @@ else:
 #     ssl._create_default_https_context = _create_unverified_https_context
 
 
+# Define the NLTK data directory
+nltk_data_dir = st.secrets["NLTK_DATA"]
+
+# Ensure the NLTK data directory exists
+if not os.path.exists(nltk_data_dir):
+    os.makedirs(nltk_data_dir, exist_ok=True)
+
+# Update the NLTK data path to include the custom directory
+nltk.data.path.append(nltk_data_dir)
+
 def download_nltk_data_if_absent(package_name):
     try:
-        # Try loading the package to see if it exists
+        # Try loading the package to see if it exists in the custom directory
         nltk.data.find("tokenizers/" + package_name)
     except LookupError:
-        # If the package doesn't exist, download it
-        nltk.download(package_name)
+        # If the package doesn't exist, download it to the specified directory
+        nltk.download(package_name, download_dir=nltk_data_dir)
 
-
+# Example usage
 download_nltk_data_if_absent('punkt')
 download_nltk_data_if_absent('stopwords')
-
 
 class ConfigHandler:
 	def __init__(self):

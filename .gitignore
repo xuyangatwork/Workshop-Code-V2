@@ -16,3 +16,4 @@ cache/
 *.avi
 test.py
 requirements old.txt
+resources/nltk_data_dir/
