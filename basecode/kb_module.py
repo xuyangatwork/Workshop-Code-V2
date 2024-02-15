@@ -372,7 +372,7 @@ def create_vectorstore():
         build = sac.buttons([
             dict(label='Build VectorStore', icon='check-circle-fill', color = 'green'),
             dict(label='Cancel', icon='x-circle-fill', color='red'),
-        ], label=None, index=1, format_func='title', align='center', position='top', size='default', direction='horizontal', shape='round', type='default', compact=False, return_index=False)
+        ], label=None, index=1, format_func='title', align='center', size='default', return_index=False)
         
         if build == 'Build VectorStore' and selected_files:
             for s_file in selected_files:

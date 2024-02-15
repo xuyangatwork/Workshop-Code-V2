@@ -2,7 +2,7 @@
 base="dark"
 
 [server]
-maxUploadSize = 100
+maxUploadSize = 10
 
 [browser]
 gatherUsageStats = false

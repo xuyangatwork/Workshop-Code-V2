@@ -183,7 +183,8 @@ def map_prompter_with_plantuml(response):
     prompt =  prompt = f"""Let's start by creating a simple MindMap on the chatbot response which is {response}. 
             Can you give the mindmap in PlantUML format. Keep it structured from the core central topic branching out to other domains and sub-domains. 
             Let's go to 3 levels to begin with and up to 6 at most. Add the start and end mindmap tags and keep it expanding on one side for now. 
-            Also, please add color codes to each node based on the complexity of each topic in terms of the time it takes to learn that topic for a beginner. Use the format *[#colour] topic. 
+            Also, please add color codes to each node based on the complexity of each topic in terms of the time it takes to learn that topic for a beginner. 
+            You must use the format *[#colour] topic. 
             """
     
     return prompt
@@ -195,14 +196,17 @@ def generate_plantuml_mindmap(prompt):
         # Generate response using OpenAI API
         response = client.chat.completions.create(
                                         model=st.session_state.openai_model, 
-                                        messages=[{"role": "user", "content": prompt}],
+                                        messages=[
+                                            {"role": "system", "content": "You are going to extract only the necessary information from the chatbot response to create a mindmap"},
+                                            {"role": "user", "content": prompt}
+                                            ],
                                         temperature=st.session_state.temp, #settings option
                                         presence_penalty=st.session_state.presence_penalty, #settings option
                                         frequency_penalty=st.session_state.frequency_penalty #settings option
                                         )
         if response.choices[0].message.content != None:
             msg = response.choices[0].message.content
-            st.text(msg)
+            #st.text(msg)
             p_syntax = re.search(r'@startmindmap.*?@endmindmap', msg, re.DOTALL).group()
             modified_syntax = re.sub(r'(\*+) \[', r'\1[', p_syntax)
             return modified_syntax

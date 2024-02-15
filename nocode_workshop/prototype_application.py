@@ -1,5 +1,4 @@
 import streamlit as st
-from basecode.main_bot import basebot
 from basecode.kb_module import display_vectorstores
 from basecode.users_module import vectorstore_selection_interface
 from datetime import datetime

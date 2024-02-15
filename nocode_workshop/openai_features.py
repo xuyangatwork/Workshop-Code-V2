@@ -2,7 +2,7 @@ import streamlit as st
 from basecode.authenticate import return_api_key
 from basecode.users_module import vectorstore_selection_interface
 from langchain.memory import ConversationBufferWindowMemory
-from st_audiorec import st_audiorec
+#from st_audiorec import st_audiorec
 import os
 import PIL
 import openai
@@ -543,76 +543,4 @@ def record_myself():
 		
 
 
-	# elif st.button("Translation (Maximum: 30 Seconds)") and wav_audio_data is not None:
-	# 	memory_file = io.BytesIO(wav_audio_data)
-	# 	memory_file.name = "recorded_audio.wav"
-
-	# 	with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmpfile:
-	# 		tmpfile.write(wav_audio_data)
-
-	# 	with st.spinner("Translating..."):
-	# 		transcription_result = translate_audio(tmpfile.name)
-	# 		os.remove(tmpfile.name) 
-	# 		st.write(transcription_result)
-	# 		return transcription_result
-
-# def call_agent(phone):
-# 	# Headers
-# 	headers = {
-# 	'Authorization': st.secrets["bland_key"],
-# 	}
-
-# 	# Data
-# 	data = {
-# 	'phone_number': phone,
-# 	'task': """Call Flow:
-
-# 		Introduce yourself as Mr Joe Tay and say you are calling from the YIJC Geography Department.
-
-# 		Verify you are speaking with the parent or guardian of the student and mention the student's name.
-
-# 		Explain the upcoming changes in the examination format for the geography paper, highlighting the new practical component.
-
-# 		Inform them about the project work that the students are required to complete.
-
-# 		Ask if they have any questions or concerns regarding these changes and offer to provide additional information or resources.
-
-# 		Thank the parent or guardian for their time and provide contact information for further inquiries.
-
-# 		Example Dialogue:
-
-# 		R: Hello, this is Mr. Joe Tay calling from YIJC Geography Department. May I speak with the parent or guardian of Samantha Tan, please?
-
-# 		P: Yes, this is her mother speaking.
-
-# 		R: Great, thank you for taking my call. I wanted to discuss some important updates regarding the geography paper that Samantha will be taking this semester. We're introducing a practical component to the examination, which will account for 20% of the final grade.
-
-# 		P: Oh, I see. What does that involve?
-
-# 		R: Students will be asked to conduct a small field study and present their findings. We believe this hands-on experience will greatly benefit their understanding of geographic research methods. In addition to this, there is also a project component that the students will need to complete in groups.
-
-# 		P: That sounds interesting. What kind of support will they receive for the project?
-
-# 		R: Teachers will be providing guidance throughout the term, and we'll have a few dedicated sessions to discuss project ideas and execution. We're also providing extra materials on our online platform.
-
-# 		P: Thank you for letting me know. I'll discuss this with Samantha tonight.
-
-# 		R: You're welcome. If you or Samantha have any questions, please feel free to contact me. I'm here to help. Here's my email and the school's phone number.
-
-# 		P: Got it. Thanks for the call.
-
-# 		R: My pleasure. Have a wonderful day!
-
-# 		This dialogue maintains the structure of providing important information and seeking confirmation while adapting the content to the educational context.""",
-# 		'voice_id': 2,
-# 		'reduce_latency': True,
-# 		'request_data': {},
-# 		'voice_settings':{
-# 			speed: 1
-# 		},
-# 		'interruption_threshold': null
-# 		}
-
-# 		# API request 
-# 	requests.post('https://api.bland.ai/call', json=data, headers=headers)
 			
