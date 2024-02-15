@@ -98,7 +98,7 @@ def download_nltk_data_if_absent(package_name):
 
 
 download_nltk_data_if_absent("punkt")
-
+download_nltk_data_if_absent("stopwords")
 
 
 class ConfigHandler:
