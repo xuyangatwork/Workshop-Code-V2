@@ -134,7 +134,7 @@ PROTOTYPE = config_handler.get_value('constants', 'PROTOTYPE')
 SEARCH = config_handler.get_value('constants', 'SEARCH')
 DISCUSSION = config_handler.get_value('constants', 'DISCUSSION')
 
-
+os.environ['TIKTOKEN_CACHE_DIR'] = st.secrets["NLTK_DATA"]
 
 def is_function_disabled(function_name):
 	#st.write("Function name: ", function_name)
