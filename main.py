@@ -22,7 +22,8 @@ from nocode_workshop.empathy_bot import empathy_bot
 from nocode_workshop.k_map import map_creation_form
 #New schema move function fom settings
 from basecode.database_schema import create_dbs
-from nocode_workshop.tool_bots import basic_analysis_bot, rag_bot
+from nocode_workshop.tool_bots import basic_analysis_bot
+from nocode_workshop.knowledge_bot import rag_bot
 import pandas as pd
 import os
 from basecode.database_module import (
