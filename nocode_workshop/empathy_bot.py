@@ -365,13 +365,13 @@ def web_capture():
 			emotion_text_placeholder.empty()  # Clear previous content (optional, as the next line overwrites it anyway)
 			emotion_text_placeholder.write(emotion_text)
 				
-			ax.clear()
-			ax.bar(emotion_labels, [current_emotions.get(emotion, 0) for emotion in emotion_labels], color='lightblue')
-			plt.ylim(0, 1)
-			plt.ylabel('Confidence')
-			plt.title('Real-time Emotion Detection')
-			ax.set_xticklabels(emotion_labels, rotation=45)
-			fig_place.pyplot(fig)
+			# ax.clear()
+			# ax.bar(emotion_labels, [current_emotions.get(emotion, 0) for emotion in emotion_labels], color='lightblue')
+			# plt.ylim(0, 1)
+			# plt.ylabel('Confidence')
+			# plt.title('Real-time Emotion Detection')
+			# ax.set_xticklabels(emotion_labels, rotation=45)
+			# fig_place.pyplot(fig)
 
 	overall_emotion, overall_score = get_overall_emotion()
 	st.session_state.overall_emotion = overall_emotion
