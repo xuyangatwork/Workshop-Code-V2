@@ -683,7 +683,7 @@ def language_bot():
 
 		if st.button("Clear Chat"):
 			clear_session_states()
-			os.remove(st.session_state.voice_audio_file_path)
+			
 		
 	l1, l2 = st.columns([3,2])
 
