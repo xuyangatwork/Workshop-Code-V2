@@ -135,7 +135,7 @@ def clear_session_states():
 		del st.session_state["memory"]
 
 
-#===============================Linking Bot===========================================
+#===============================Empathy Bot===========================================
 
 def empathy_bot():
 	with st.expander("Chatbot Settings"):
@@ -154,10 +154,6 @@ def empathy_bot():
 
 		if st.button("Clear Chat"):
 			clear_session_states()
-			if st.session_state.concept1:
-				st.session_state.concept1 = ""
-			if st.session_state.concept2:
-				st.session_state.concept2 = ""
 	
 	j1, j2 = st.columns([3,2])
 
@@ -312,7 +308,7 @@ def web_capture():
 	token = client.tokens.create()
 	detector = FER(mtcnn=True)
 	emotion_statistics = []
-	ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback)
+	ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback, rtc_configuration={"iceServers": token.ice_servers})
 
 	# Set up a matplotlib figure for displaying live emotion detection results
 	plt.ion()  # Turn on interactive mode for live updates
