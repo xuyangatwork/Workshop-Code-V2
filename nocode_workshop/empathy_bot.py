@@ -11,7 +11,7 @@ from langchain.chat_models import ChatOpenAI
 from basecode.main_bot import add_response, insert_into_data_table, complete_my_lesson, response_download
 #from st_audiorec import st_audiorec
 import os
-import PIL
+from PIL import Image
 import openai
 import google.generativeai as genai
 import requests
@@ -38,6 +38,7 @@ import time
 import threading
 from twilio.rest import Client
 import collections
+import tempfile
 
 # Initialize a dictionary to store emotion statistics
 emotion_summary = collections.defaultdict(lambda: {'count': 0, 'score': 0})
@@ -129,6 +130,8 @@ def complete_my_lesson():
 
 def clear_session_states():
 	st.session_state.msg = []
+	if st.session_state.overall_emotion:
+		st.session_state.overall_emotion = "Neutral"
 	if "memory" not in st.session_state:
 		pass
 	else:
@@ -164,7 +167,8 @@ def empathy_bot():
 			empathy_base_bot(EMPATHY_BOT, True, False)
 	with j2:
 		with st.container(border=True):
-			web_capture()
+			#web_capture()
+			image_capture()
 		pass
 	
 def prompt_template_function_empathy(prompt, memory_flag, rag_flag):
@@ -249,8 +253,7 @@ def empathy_base_bot(bot_name, memory_flag, rag_flag):
 					model=st.session_state.openai_model,
 					messages=[
 						{"role": "system", "content":prompt_template },
-						{"role": "assistant", "content": f"The user overall emotion is {st.session_state.overall_emotion} with a score of {st.session_state.overall_score}"},
-						{"role": "user", "content": prompt},
+						{"role": "user", "content": f"Take note of the following user emotion which is currently {st.session_state.overall_emotion} and adjust your conversation accordingly" + prompt},
 					],
 					temperature=st.session_state.temp, #settings option
 					presence_penalty=st.session_state.presence_penalty, #settings option
@@ -274,28 +277,89 @@ def empathy_base_bot(bot_name, memory_flag, rag_flag):
 
 
 def update_emotion_statistics(current_emotions):
-    """Update the emotion statistics with the current emotions detected."""
-    for emotion, score in current_emotions.items():
-        emotion_summary[emotion]['count'] += 1
-        emotion_summary[emotion]['score'] += score
+	"""Update the emotion statistics with the current emotions detected."""
+	for emotion, score in current_emotions.items():
+		emotion_summary[emotion]['count'] += 1
+		emotion_summary[emotion]['score'] += score
 
 def get_overall_emotion():
-    """Determine the overall emotion based on the aggregated statistics."""
-    # Ensure there is data to process
-    if not emotion_summary:
-        return "No Data", 0  # Or any other default or indicative value
+	"""Determine the overall emotion based on the aggregated statistics."""
+	# Ensure there is data to process
+	if not emotion_summary:
+		return "No Data", 0  # Or any other default or indicative value
 
-    # Calculate the average score for each emotion
-    for emotion in emotion_summary:
-        if emotion_summary[emotion]['count'] > 0:  # Ensure division by zero is not possible
-            emotion_summary[emotion]['average'] = emotion_summary[emotion]['score'] / emotion_summary[emotion]['count']
-        else:
-            emotion_summary[emotion]['average'] = 0
+	# Calculate the average score for each emotion
+	for emotion in emotion_summary:
+		if emotion_summary[emotion]['count'] > 0:  # Ensure division by zero is not possible
+			emotion_summary[emotion]['average'] = emotion_summary[emotion]['score'] / emotion_summary[emotion]['count']
+		else:
+			emotion_summary[emotion]['average'] = 0
 
-    # Find the emotion with the highest average score
-    overall_emotion = max(emotion_summary, key=lambda e: emotion_summary[e]['average'])
-    return overall_emotion, emotion_summary[overall_emotion]['average']
+	# Find the emotion with the highest average score
+	overall_emotion = max(emotion_summary, key=lambda e: emotion_summary[e]['average'])
+	return overall_emotion, emotion_summary[overall_emotion]['average']
 
+def image_capture():
+	if "overall_emotion" not in st.session_state:
+		st.session_state.overall_emotion = "Neutral"
+	if "overall_score" not in st.session_state:
+		st.session_state.overall_score = 0
+	# Display instructions to the user
+	st.write("Take a picture of yourself before we start the conversation")
+
+	# Capture an image from the user
+	uploaded_file = st.camera_input("Capture")
+	
+	# Ensure an image was captured
+	if uploaded_file is not None:
+		bytes_data = uploaded_file.getvalue()
+		
+		# Convert the bytes data to a PIL Image
+		img = Image.open(io.BytesIO(bytes_data))
+		# Initialize the FER detector with MTCNN
+		img = Image.open(io.BytesIO(bytes_data))
+		
+		# Save the PIL Image to a temporary file
+		with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+			img.save(tmp, format="JPEG")
+			tmp_path = tmp.name  # Store the temporary file path
+
+		detector = FER(mtcnn=True)
+		
+		# Convert the captured image to the format expected by FER (if necessary)
+		# This might involve converting the image from a PIL format to an array, etc.
+		# The conversion depends on how Streamlit returns the camera input and how FER expects it.
+		
+		# Detect emotions in the image
+		result = detector.detect_emotions(tmp_path)
+		largest_face = None
+		max_area = 0
+		
+		# Find the largest face for primary emotion analysis
+		for face in result:
+			box = face["box"]
+			x, y, w, h = box
+			area = w * h
+			if area > max_area:
+				max_area = area
+				largest_face = face
+		
+		# If a face is detected, display the emotion
+		if largest_face:
+			current_emotions = largest_face["emotions"]
+			emotion_type = max(current_emotions, key=current_emotions.get)
+			emotion_score = current_emotions[emotion_type]
+			
+			# Display the detected emotion and its score
+			emotion_text = f"Detected emotion: {emotion_type} with a confidence of {emotion_score:.2f}"
+			st.session_state.overall_emotion = emotion_type
+			st.session_state.overall_score = emotion_score
+			st.write(emotion_text)
+		else:
+			st.write("No face detected. Please try again.")
+	else:
+		st.write("No image captured. Please take a picture to proceed.")
+	
 
 def web_capture():
 	if "overall_emotion" not in st.session_state:
