@@ -624,10 +624,7 @@ def main():
 					sac.StepsItem(title='Create a new knowledge base'),
 					sac.StepsItem(title='Assign a knowledge base to a user'),
 					sac.StepsItem(title='Delete a knowledge base (Optional)'),
-				], color='lime'
-				format_func='title',
-				placement='vertical',
-				size='small'
+				], color='lime',
 			)
 			if options == "Step 1":
 				st.subheader("KB created in the repository")
