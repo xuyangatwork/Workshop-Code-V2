@@ -621,10 +621,10 @@ def main():
 			st.subheader(f":green[{st.session_state.option}]") 
 			options = sac.steps(
 				items=[
-					sac.StepsItem(title='Step 1', description='Create a new knowledge base'),
-					sac.StepsItem(title='Step 2', description='Assign a knowledge base to a user'),
-					sac.StepsItem(title='Step 3', description='Delete a knowledge base (Optional)'),
-				],
+					sac.StepsItem(title='Create a new knowledge base'),
+					sac.StepsItem(title='Assign a knowledge base to a user'),
+					sac.StepsItem(title='Delete a knowledge base (Optional)'),
+				], color='lime'
 				format_func='title',
 				placement='vertical',
 				size='small'
