@@ -626,19 +626,19 @@ def main():
 					sac.StepsItem(title='Delete a knowledge base (Optional)'),
 				], color='lime',
 			)
-			if options == "Step 1":
+			if options == "Create a new knowledge base":
 				st.subheader("KB created in the repository")
 				display_vectorstores()
 				st.subheader("Files available in the repository")
 				display_files()
 				create_vectorstore()
-			elif options == "Step 2":
+			elif options == "Assign a knowledge base to a user":
 				st.subheader("KB created in the repository")
 				display_vectorstores()
 				vectorstore_selection_interface(st.session_state.user['id'])
 				link_profiles_to_vectorstore_interface(st.session_state.user['id'])
 	
-			elif options == "Step 3":
+			elif options == "Delete a knowledge base (Optional)":
 				st.subheader("KB created in the repository")
 				display_vectorstores()
 				delete_vectorstores()
