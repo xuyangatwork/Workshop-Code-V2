@@ -35,7 +35,7 @@ if st.secrets["sql_ext_path"] == "None":
 else:
 	WORKING_DATABASE= st.secrets["sql_ext_path"]
 	
-def clear_session_states():
+def clear_session_states():                
 	st.session_state.msg = []
 	if "memory" not in st.session_state:
 		pass

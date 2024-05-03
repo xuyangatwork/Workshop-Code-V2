@@ -222,7 +222,8 @@ def base_bot(bot_name, memory_flag, rag_flag):
 				)
 				response = st.write_stream(stream)
 			st.session_state.msg.append({"role": "assistant", "content": response})
-			st.session_state["memory"].save_context({"input": prompt},{"output": response})
+			if memory_flag:
+				st.session_state["memory"].save_context({"input": prompt},{"output": response})
 			# Insert data into the table
 			now = datetime.now() # Using ISO format for date
 			num_tokens = len(full_response + prompt)*1.3

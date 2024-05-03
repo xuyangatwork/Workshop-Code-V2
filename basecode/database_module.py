@@ -6,8 +6,8 @@ import os
 import zipfile
 import boto3
 
-if "S3_BUCKET" in st.secrets:
-    S3_BUCKET = st.secrets["S3_BUCKET"]
+if "S3_BUCKET" in st.secrets["AWS"]:
+    S3_BUCKET = st.secrets["AWS"]["S3_BUCKET"]
 else:
     S3_BUCKET = "Default"
 

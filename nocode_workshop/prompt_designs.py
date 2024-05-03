@@ -100,25 +100,24 @@ def prompt_designs_llm():
 			prompt_design = part1 + part2
 		else:
 			prompt_design = part1
-		select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere", "gemini-pro"])
-		prompt_query = st.text_area("Enter your user input:", value="I want to know about AI in 100 words.", max_chars=4000, height=300)	
-		if st.button("Submit Prompt Design and Query to LLM"):
-			if prompt_design and prompt_query:
+		# select_model = st.selectbox("Select a model", ["gpt-3.5-turbo", "gpt-4-1106-preview", "cohere", "gemini-pro"])
+		# prompt_query = st.text_area("Enter your user input:", value="I want to know about AI in 100 words.", max_chars=4000, height=300)	
+		if st.button("Submit Prompt Design"):
+			if prompt_design:
 				# Replace the placeholder with the actual user input
-				full_prompt = prompt_design + "\n" + prompt_query
 				st.divider()
-				st.success("Prompt design for chatbot")
+				st.success("Prompt design template for chatbot")
 				st.write(prompt_design)
-				st.divider()
-				st.success("Prompt output")
-				if select_model == "cohere":
-					call_cohere_api(full_prompt)
-				elif select_model == "gemini-pro":
-					call_google_api(full_prompt)
-				else:
-					api_call(full_prompt, select_model)
+				# st.divider()
+				# st.success("Prompt output")
+				# if select_model == "cohere":
+				# 	call_cohere_api(full_prompt)
+				# elif select_model == "gemini-pro":
+				# 	call_google_api(full_prompt)
+				# else:
+				# 	api_call(full_prompt, select_model)
 			else:
-				st.warning("Please enter a prompt design and user input.")
+				st.warning("Please enter a prompt design")
 		
 
 def costar_prompt_framework():
